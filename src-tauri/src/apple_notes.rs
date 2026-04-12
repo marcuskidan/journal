@@ -166,6 +166,7 @@ pub struct ImportResult {
     pub success: bool,
     pub message: String,
     pub imported: usize,
+    pub updated: usize,
     pub skipped: usize,
     pub duplicates: usize,
     pub failed: usize,
@@ -314,18 +315,14 @@ fn decode_note_data(hexdata: &str) -> Result<ANNote, String> {
     // Try new schema first (macOS 15+): Document { tag1=version, tag2=NoteObject { tag3=Note } }
     if let Ok(doc) = ANDocumentV2::decode(&decompressed[..]) {
         if let Some(note) = doc.note_object.and_then(|obj| obj.note) {
-            if note.note_text.is_some() {
-                return Ok(note);
-            }
+            return Ok(note);
         }
     }
 
     // Fall back to old schema: Document { tag2=version, tag3=Note }
     if let Ok(doc) = ANDocumentV1::decode(&decompressed[..]) {
         if let Some(note) = doc.note {
-            if note.note_text.is_some() {
-                return Ok(note);
-            }
+            return Ok(note);
         }
     }
 
@@ -761,6 +758,7 @@ pub fn import_apple_notes(
     )?;
 
     let mut imported = 0usize;
+    let mut updated = 0usize;
     let mut skipped = 0usize;
     let mut duplicates = 0usize;
     let mut failed = 0usize;
@@ -770,7 +768,9 @@ pub fn import_apple_notes(
         let title = row["ZTITLE1"].as_str().unwrap_or("Untitled");
         let hexdata = row["zhexdata"].as_str().unwrap_or("");
         let creation_ts = row["creation_ts"].as_f64().unwrap_or(0.0);
+        let mod_ts = row["mod_ts"].as_f64().unwrap_or(0.0);
         let creation_ms = decode_time(creation_ts);
+        let note_mod_ms = decode_time(mod_ts);
 
         if hexdata.is_empty() {
             skipped += 1;
@@ -788,11 +788,26 @@ pub fn import_apple_notes(
         let filename = format!("{}{}.md", date_prefix, safe_title);
         let file_path = output_dir.join(&filename);
 
-        // Skip if file already exists (duplicate from previous import)
-        if file_path.exists() {
-            duplicates += 1;
-            continue;
-        }
+        // If file exists, check whether the note has been modified since the file was written.
+        // Overwrite only if the Apple Notes version is newer; otherwise skip as duplicate.
+        let is_update = if file_path.exists() {
+            let file_mod_ms = fs::metadata(&file_path)
+                .and_then(|m| m.modified())
+                .map(|t| {
+                    t.duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_millis() as i64
+                })
+                .unwrap_or(0);
+            if note_mod_ms > file_mod_ms {
+                true // note is newer → overwrite
+            } else {
+                duplicates += 1;
+                continue; // file is up-to-date
+            }
+        } else {
+            false // new file
+        };
 
         // Decode and convert
         match decode_note_data(hexdata) {
@@ -804,7 +819,13 @@ pub fn import_apple_notes(
                 }
 
                 match fs::write(&file_path, &markdown) {
-                    Ok(_) => imported += 1,
+                    Ok(_) => {
+                        if is_update {
+                            updated += 1;
+                        } else {
+                            imported += 1;
+                        }
+                    }
                     Err(e) => {
                         let err_msg = format!("Failed to write {}: {}", filename, e);
                         eprintln!("{}", err_msg);

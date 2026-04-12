@@ -2963,32 +2963,49 @@ function parseDirectoryNotebook(files, notebookId, notebookName) {
 
   for (const file of files) {
     const dateParsed = parseDateFromFilename(file.name);
-    if (!dateParsed) {
-      console.info(`Skipping "${file.name}" in directory notebook "${notebookName}" — no date in filename`);
-      continue;
-    }
 
     let body = file.text.trim();
-    // If the file starts with a date heading matching our format, strip it
-    // (avoids duplicate date display since we already got the date from filename)
-    const firstLineMatch = body.match(/^#*\s*\d{2}-\d{2}-\d{4}\s*\n?/);
-    if (firstLineMatch) {
-      body = body.substring(firstLineMatch[0].length).trim();
-    }
 
-    // If there's a title from the filename and the body doesn't start with
-    // a heading, prepend it as an h2
-    if (dateParsed.title && body && !body.startsWith('#')) {
-      body = `## ${dateParsed.title}\n\n${body}`;
-    } else if (dateParsed.title && !body) {
-      body = `## ${dateParsed.title}`;
+    if (dateParsed) {
+      // If the file starts with a date heading matching our format, strip it
+      // (avoids duplicate date display since we already got the date from filename)
+      const firstLineMatch = body.match(/^#*\s*\d{2}-\d{2}-\d{4}\s*\n?/);
+      if (firstLineMatch) {
+        body = body.substring(firstLineMatch[0].length).trim();
+      }
+
+      // If there's a title from the filename and the body doesn't start with
+      // a heading, prepend it as an h2
+      if (dateParsed.title && body && !body.startsWith('#')) {
+        body = `## ${dateParsed.title}\n\n${body}`;
+      } else if (dateParsed.title && !body) {
+        body = `## ${dateParsed.title}`;
+      }
+    } else {
+      // No date in filename — use the filename itself as the title
+      // and fall back to epoch (will sort to the end)
+      const baseName = file.name.replace(/\.md$/i, '').replace(/[-_]+/g, ' ').trim();
+      if (body && !body.startsWith('#')) {
+        body = `## ${baseName}\n\n${body}`;
+      } else if (!body) {
+        body = `## ${baseName}`;
+      }
     }
 
     if (!body) continue;
 
+    // Use parsed date if available, otherwise fall back to today
+    const dateStr = dateParsed ? dateParsed.dateStr : (() => {
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      return `${mm}-${dd}-${now.getFullYear()}`;
+    })();
+    const dateObj = dateParsed ? dateParsed.dateObj : new Date();
+
     const entry = {
-      date: dateParsed.dateStr,
-      dateObj: dateParsed.dateObj,
+      date: dateStr,
+      dateObj: dateObj,
       body: body,
       html: parseMd(body),
       preview: body.replace(/<span[^>]*data-tag="[^"]*">/g, '').replace(/<\/span>/g, '')
