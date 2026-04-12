@@ -469,23 +469,20 @@
     min-width: 240px;
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 12px;
     max-height: calc(100vh - 200px);
     overflow-y: auto;
     scrollbar-width: none;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
   }
   .inspector-cards::-webkit-scrollbar { display: none; }
   .inspector-cards.hidden { display: none; }
 
   .inspector-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
     padding: 14px 16px;
-  }
-  .inspector-card + .inspector-card {
-    border-top: 1px solid var(--border);
   }
 
   .inspector-card-title {
