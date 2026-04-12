@@ -18,10 +18,41 @@ const NOTE_DB: &str = "NoteStore.sqlite";
 /// Apple CoreTime epoch offset (seconds between Unix epoch and Apple epoch).
 const CORETIME_OFFSET: f64 = 978_307_200.0;
 
-// ── Protobuf types (hand-defined for prost, matching Apple Notes schema) ──
+// ── Protobuf types ────────────────────────────────────────────
+//
+// Apple has changed the protobuf schema across macOS versions:
+//
+//   Old (pre-macOS ~15):  Document { version=tag2, note=tag3(Note) }
+//   New (macOS 15+):      Document { version=tag1, noteObject=tag2(NoteObject) }
+//                          NoteObject { ..., note=tag3(Note) }
+//
+// The Note message itself (noteText=tag2, attributeRun=tag5) is unchanged.
+// We define both Document variants and try the new one first.
 
+/// New-format document (macOS 15+): version at tag 1, wrapped note at tag 2.
 #[derive(Clone, PartialEq, Message)]
-pub struct ANDocument {
+pub struct ANDocumentV2 {
+    #[prost(int32, optional, tag = "1")]
+    pub version: Option<i32>,
+    #[prost(message, optional, tag = "2")]
+    pub note_object: Option<ANNoteObject>,
+}
+
+/// Wrapper message introduced in the new format.
+/// Contains the actual Note at tag 3.
+#[derive(Clone, PartialEq, Message)]
+pub struct ANNoteObject {
+    #[prost(int32, optional, tag = "1")]
+    pub unknown1: Option<i32>,
+    #[prost(int32, optional, tag = "2")]
+    pub unknown2: Option<i32>,
+    #[prost(message, optional, tag = "3")]
+    pub note: Option<ANNote>,
+}
+
+/// Old-format document (pre-macOS ~15): version at tag 2, note at tag 3.
+#[derive(Clone, PartialEq, Message)]
+pub struct ANDocumentV1 {
     #[prost(int32, optional, tag = "2")]
     pub version: Option<i32>,
     #[prost(message, optional, tag = "3")]
@@ -267,159 +298,41 @@ fn days_to_ymd(days: i64) -> (i32, u32, u32) {
     (y as i32, m, d)
 }
 
-/// Try to decompress bytes using gzip, then zlib, then raw deflate.
-/// Returns decompressed bytes on success, or None if all methods fail.
-fn try_decompress(bytes: &[u8]) -> Option<Vec<u8>> {
-    // Strategy 1: Gzip
-    {
-        let mut decoder = GzDecoder::new(bytes);
-        let mut buf = Vec::new();
-        if decoder.read_to_end(&mut buf).is_ok() && !buf.is_empty() {
-            return Some(buf);
-        }
-    }
-    // Strategy 2: Zlib
-    if let Some(buf) = try_decompress_zlib(bytes) {
-        return Some(buf);
-    }
-    // Strategy 3: Raw deflate
-    try_decompress_deflate(bytes)
-}
-
-/// Format the first N bytes of a slice as hex for diagnostics.
-fn hex_preview(data: &[u8], n: usize) -> String {
-    data[..data.len().min(n)]
-        .iter()
-        .map(|b| format!("{:02X}", b))
-        .collect::<Vec<_>>()
-        .join(" ")
-}
-
-/// Decode hex string → decompress → protobuf → ANDocument.
-/// Tries multiple decompression strategies and falls back to raw protobuf.
-/// Returns detailed diagnostics on failure so we can pinpoint the issue.
-fn decode_note_data(hexdata: &str) -> Result<ANDocument, String> {
+/// Decode hex string → gunzip → protobuf → ANNote.
+/// Tries the new schema (V2, macOS 15+) first, then falls back to the old one (V1).
+fn decode_note_data(hexdata: &str) -> Result<ANNote, String> {
     // Hex decode
     let bytes = hex_decode(hexdata)?;
 
-    // Track what happened at each stage for diagnostics
-    let mut gzip_result: Option<Result<Vec<u8>, String>> = None;
-    let mut proto_error: Option<String> = None;
+    // Gunzip
+    let mut decoder = GzDecoder::new(&bytes[..]);
+    let mut decompressed = Vec::new();
+    decoder
+        .read_to_end(&mut decompressed)
+        .map_err(|e| format!("Gunzip failed: {}", e))?;
 
-    // Stage 1: Try gzip decompression (most common format — first bytes are 1F 8B)
-    {
-        let mut decoder = GzDecoder::new(&bytes[..]);
-        let mut buf = Vec::new();
-        match decoder.read_to_end(&mut buf) {
-            Ok(_) if !buf.is_empty() => {
-                // Gzip worked! Try protobuf decode
-                match ANDocument::decode(&buf[..]) {
-                    Ok(doc) => return Ok(doc),
-                    Err(e) => {
-                        proto_error = Some(format!(
-                            "Gzip OK ({} -> {} bytes), protobuf failed: {}. \
-                             Decompressed starts: [{}]",
-                            bytes.len(),
-                            buf.len(),
-                            e,
-                            hex_preview(&buf, 20)
-                        ));
-                        gzip_result = Some(Ok(buf));
-                    }
-                }
-            }
-            Ok(_) => {
-                gzip_result = Some(Err("decompressed to empty".into()));
-            }
-            Err(e) => {
-                gzip_result = Some(Err(format!("{}", e)));
+    // Try new schema first (macOS 15+): Document { tag1=version, tag2=NoteObject { tag3=Note } }
+    if let Ok(doc) = ANDocumentV2::decode(&decompressed[..]) {
+        if let Some(note) = doc.note_object.and_then(|obj| obj.note) {
+            if note.note_text.is_some() {
+                return Ok(note);
             }
         }
     }
 
-    // Stage 2: Try zlib and raw deflate
-    let decompress_attempts = [
-        ("zlib", try_decompress_zlib(&bytes)),
-        ("raw_deflate", try_decompress_deflate(&bytes)),
-    ];
-    for (method, result) in &decompress_attempts {
-        if let Some(decompressed) = result {
-            match ANDocument::decode(&decompressed[..]) {
-                Ok(doc) => return Ok(doc),
-                Err(e) => {
-                    if proto_error.is_none() {
-                        proto_error = Some(format!(
-                            "{} OK ({} -> {} bytes), protobuf failed: {}",
-                            method, bytes.len(), decompressed.len(), e
-                        ));
-                    }
-                }
+    // Fall back to old schema: Document { tag2=version, tag3=Note }
+    if let Ok(doc) = ANDocumentV1::decode(&decompressed[..]) {
+        if let Some(note) = doc.note {
+            if note.note_text.is_some() {
+                return Ok(note);
             }
         }
     }
 
-    // Stage 3: Raw protobuf (no compression)
-    if let Ok(doc) = ANDocument::decode(&bytes[..]) {
-        return Ok(doc);
-    }
-
-    // Stage 4: Skip header bytes + retry decompression
-    for skip in [2usize, 4, 8] {
-        if bytes.len() > skip {
-            if let Some(decompressed) = try_decompress(&bytes[skip..]) {
-                if let Ok(doc) = ANDocument::decode(&decompressed[..]) {
-                    return Ok(doc);
-                }
-            }
-            if let Ok(doc) = ANDocument::decode(&bytes[skip..]) {
-                return Ok(doc);
-            }
-        }
-    }
-
-    // Build a detailed diagnostic error
-    let compressed_preview = hex_preview(&bytes, 16);
-
-    if let Some(pe) = proto_error {
-        // Decompression worked but protobuf failed — this is the key info
-        Err(format!(
-            "Decompression succeeded but protobuf decode failed. {}",
-            pe
-        ))
-    } else {
-        let gz_detail = match &gzip_result {
-            Some(Err(e)) => format!("gzip error: {}", e),
-            _ => "gzip: unknown".into(),
-        };
-        Err(format!(
-            "All decompression methods failed ({} bytes). First bytes: [{}]. {}",
-            bytes.len(),
-            compressed_preview,
-            gz_detail
-        ))
-    }
-}
-
-fn try_decompress_zlib(bytes: &[u8]) -> Option<Vec<u8>> {
-    use flate2::read::ZlibDecoder;
-    let mut decoder = ZlibDecoder::new(bytes);
-    let mut buf = Vec::new();
-    if decoder.read_to_end(&mut buf).is_ok() && !buf.is_empty() {
-        Some(buf)
-    } else {
-        None
-    }
-}
-
-fn try_decompress_deflate(bytes: &[u8]) -> Option<Vec<u8>> {
-    use flate2::read::DeflateDecoder;
-    let mut decoder = DeflateDecoder::new(bytes);
-    let mut buf = Vec::new();
-    if decoder.read_to_end(&mut buf).is_ok() && !buf.is_empty() {
-        Some(buf)
-    } else {
-        None
-    }
+    Err(format!(
+        "Protobuf decode failed: data did not match V1 or V2 Apple Notes schema ({} bytes decompressed)",
+        decompressed.len()
+    ))
 }
 
 fn hex_decode(hex: &str) -> Result<Vec<u8>, String> {
@@ -435,13 +348,8 @@ fn hex_decode(hex: &str) -> Result<Vec<u8>, String> {
         .collect()
 }
 
-/// Convert a decoded ANDocument to Markdown text.
-fn note_to_markdown(doc: &ANDocument) -> String {
-    let note = match &doc.note {
-        Some(n) => n,
-        None => return String::new(),
-    };
-
+/// Convert a decoded ANNote to Markdown text.
+fn note_to_markdown(note: &ANNote) -> String {
     let note_text = note.note_text.as_deref().unwrap_or("");
     if note_text.is_empty() {
         return String::new();
@@ -888,8 +796,8 @@ pub fn import_apple_notes(
 
         // Decode and convert
         match decode_note_data(hexdata) {
-            Ok(doc) => {
-                let markdown = note_to_markdown(&doc);
+            Ok(note) => {
+                let markdown = note_to_markdown(&note);
                 if markdown.trim().is_empty() {
                     skipped += 1;
                     continue;
