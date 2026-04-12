@@ -1,0 +1,4705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entries</title>
+<style>
+  :root {
+    /* Anthropic-inspired warm cream palette */
+    --bg: #faf9f0;
+    --bg-card: #fdfcf7;
+    --bg-hover: #f3f2e8;
+    --bg-nav: #f5f4eb;
+    --bg-input: #f0efe6;
+    --text: #1a1918;
+    --text-secondary: #6b6966;
+    --text-tertiary: #9c9892;
+    --border: #e8e6df;
+    --border-light: #f0efe6;
+    --accent: #d97757;
+    --accent-light: #faf0eb;
+    --accent-dark: #c4614a;
+    --green: #5a9a7a;
+    --green-bg: #f0f6f2;
+    --green-border: #c4dece;
+    --yellow: #b8923e;
+    --yellow-bg: #faf6ed;
+    --yellow-border: #e5d9b8;
+    --red: #c45a5a;
+    --red-bg: #faf0f0;
+    --red-border: #e5c4c4;
+    --blue: #5a7fa8;
+    --blue-bg: #f0f4fa;
+    --blue-border: #c4d4e5;
+    --purple: #c4795a;
+    --purple-bg: #faf4f0;
+    --purple-border: rgba(196, 121, 90, 0.25);
+    --orange: #d98c47;
+    --orange-bg: #faf4ed;
+    --orange-border: #e5d2b8;
+    --shadow-sm: none;
+    --shadow: 0 1px 2px rgba(26,25,24,0.03);
+    --shadow-md: 0 2px 4px rgba(26,25,24,0.04);
+    --radius: 4px;
+    --radius-lg: 6px;
+    /* Typography */
+    --font-serif: Georgia, 'Times New Roman', 'Iowan Old Style', serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  [data-theme="dark"] {
+    --bg: #1a1918;
+    --bg-card: #242320;
+    --bg-hover: #2e2d28;
+    --bg-nav: #1f1e1b;
+    --bg-input: #2e2d28;
+    --text: #e8e6df;
+    --text-secondary: #9c9892;
+    --text-tertiary: #6b6966;
+    --border: #363430;
+    --border-light: #2e2d28;
+    --accent-light: #2e2218;
+    --green-bg: #1a2420;
+    --green-border: #2e4038;
+    --yellow-bg: #242018;
+    --yellow-border: #4a3e20;
+    --red-bg: #241a1a;
+    --red-border: #4a2828;
+    --blue-bg: #1a2030;
+    --blue-border: #283848;
+    --purple-bg: #2e2218;
+    --orange-bg: #24201a;
+    --orange-border: #4a3820;
+    --shadow-sm: none;
+    --shadow: 0 1px 2px rgba(0,0,0,0.15);
+    --shadow-md: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px;
+    background: var(--bg-nav);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    transition: transform 0.2s ease;
+  }
+
+  .sidebar-header {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text);
+    border-radius: var(--radius);
+    transition: background 0.15s;
+  }
+  .sidebar-brand:hover { background: var(--bg-hover); }
+
+  .sidebar-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .sidebar-logo.disconnected {
+    background: var(--yellow-bg);
+    border: 1px dashed var(--yellow-border);
+  }
+  .sidebar-logo.connected {
+    background: var(--green-bg);
+    border: 1px solid var(--green-border);
+  }
+
+  .sidebar-logo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+  .sidebar-logo.disconnected .sidebar-logo-dot {
+    background: var(--yellow);
+  }
+  .sidebar-logo.connected .sidebar-logo-dot {
+    background: var(--green);
+  }
+
+  .sidebar-title {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    font-family: var(--font-serif);
+  }
+
+  .sidebar-subtitle {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+    letter-spacing: 0.01em;
+    transition: color 0.2s;
+  }
+  .sidebar-brand.disconnected .sidebar-subtitle {
+    color: var(--yellow);
+  }
+
+  .nav-section {
+    padding: 12px 12px 4px;
+  }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    padding: 0 8px;
+    margin-bottom: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    margin: 1px 0;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 400;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+
+  .nav-item:hover { background: var(--bg-hover); color: var(--text); }
+  .nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+
+  .nav-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+
+  .nav-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--bg-input);
+    color: var(--text-tertiary);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+
+  .nav-item.active .nav-badge { background: var(--accent); color: white; opacity: 0.75; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .theme-toggle:hover { background: var(--bg-hover); color: var(--text); }
+
+  /* Main content */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    padding: 32px 48px;
+    max-width: 1200px;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; animation: pageFadeIn 0.25s ease-out; }
+
+  @keyframes pageFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Page header */
+  .page-header {
+    margin-bottom: 20px;
+  }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+    font-family: var(--font-serif);
+  }
+
+  .page-tagline {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    font-weight: 400;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .count {
+    font-size: 10px;
+    background: var(--bg-input);
+    padding: 2px 7px;
+    border-radius: 3px;
+    color: var(--text-tertiary);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* Filter pills */
+  .filter-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-pill {
+    padding: 5px 14px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+
+  .filter-pill:hover { border-color: var(--text-tertiary); color: var(--text); }
+  .filter-pill.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* Slideshow layout — used for notebook + entry detail */
+  .slideshow-layout {
+    display: flex;
+    gap: 0;
+    height: calc(100vh - 170px);
+    min-height: 420px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg-card);
+  }
+
+  /* Thumbnail panel (left) */
+  .thumb-panel {
+    width: 260px;
+    min-width: 260px;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    background: var(--bg);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .thumb-panel::-webkit-scrollbar { width: 4px; }
+  .thumb-panel::-webkit-scrollbar-track { background: transparent; }
+  .thumb-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .thumb-item {
+    padding: 12px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-light);
+    transition: all 0.12s ease;
+    position: relative;
+  }
+
+  .thumb-item:hover { background: var(--bg-hover); }
+
+  .thumb-item.active {
+    background: var(--bg-card);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+
+  .thumb-date {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 2px;
+    font-family: var(--font-serif);
+  }
+
+  .thumb-item.active .thumb-date { color: var(--accent); }
+
+  .thumb-preview {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+  }
+
+  .thumb-source {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* Date group headers in the thumb panel */
+  .thumb-month-header {
+    padding: 10px 14px 6px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border-light);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  /* Detail panel (center) */
+  .detail-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 32px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .detail-panel::-webkit-scrollbar { width: 6px; }
+  .detail-panel::-webkit-scrollbar-track { background: transparent; }
+  .detail-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ── Floating inspector cards (right of main) ── */
+  .inspector-cards {
+    position: fixed;
+    right: 24px;
+    top: 32px;
+    width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 5;
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .inspector-cards::-webkit-scrollbar { display: none; }
+  .inspector-cards.hidden { display: none; }
+
+  .inspector-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 14px 16px;
+  }
+
+  .inspector-card-title {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+  }
+
+  .inspector-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .inspector-field:last-child { margin-bottom: 0; }
+
+  .inspector-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+  }
+
+  /* Editable field row: shows text + pencil, swaps to input on edit */
+  .inspector-editable {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+  }
+  .inspector-editable-value {
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .inspector-edit-btn {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    border-radius: var(--radius);
+    transition: all 0.12s;
+    font-size: 12px;
+    padding: 0;
+  }
+  .inspector-edit-btn:hover { background: var(--bg-hover); color: var(--text); }
+
+  .inspector-input {
+    font-size: 13px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    color: var(--text);
+    font-family: var(--font-sans);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .inspector-input:focus {
+    border-color: var(--accent);
+  }
+
+  .inspector-icon-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .inspector-icon-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.12s;
+  }
+  .inspector-icon-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+  .inspector-icon-btn.active { border-color: var(--accent); background: var(--accent-light); }
+
+  /* Tag navigator items */
+  .inspector-tag-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .inspector-tag-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.12s;
+    font-size: 12px;
+  }
+  .inspector-tag-item:hover { background: var(--bg-hover); }
+
+  .inspector-tag-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--purple);
+    flex-shrink: 0;
+  }
+
+  .inspector-tag-name {
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+
+  .inspector-tag-nav {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .inspector-tag-nav-btn {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    border-radius: 3px;
+    font-size: 9px;
+    padding: 0;
+    transition: all 0.12s;
+  }
+  .inspector-tag-nav-btn:hover { background: var(--bg-input); color: var(--text); }
+
+  .inspector-tag-pos {
+    font-size: 9px;
+    color: var(--text-tertiary);
+    min-width: 20px;
+    text-align: center;
+    user-select: none;
+  }
+
+  .inspector-tag-empty {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-style: italic;
+    padding: 4px 0;
+  }
+
+  .detail-panel-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .detail-panel-empty .empty-icon { font-size: 32px; }
+
+  /* Entry detail */
+  .entry-header {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .entry-date {
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    font-family: var(--font-serif);
+  }
+
+  .entry-day {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  .entry-source-badge {
+    font-size: 11px;
+    font-weight: 400;
+    padding: 3px 10px;
+    border-radius: 3px;
+    background: var(--bg-input);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border);
+  }
+
+  .entry-nav-arrows {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: 16px;
+    margin-top: 4px;
+  }
+
+  .entry-nav-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+
+  .entry-nav-btn:hover { background: var(--bg-hover); color: var(--text); border-color: var(--text-tertiary); }
+  .entry-nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .entry-nav-btn:disabled:hover { background: var(--bg); color: var(--text-secondary); border-color: var(--border); }
+
+  /* Rendered markdown content */
+  .entry-content {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.75;
+  }
+
+  .entry-content h1 {
+    font-size: 19px;
+    font-weight: 400;
+    margin: 28px 0 8px;
+    letter-spacing: -0.01em;
+    font-family: var(--font-serif);
+  }
+
+  .entry-content h2 {
+    font-size: 16px;
+    font-weight: 400;
+    margin: 22px 0 6px;
+    color: var(--text);
+    font-family: var(--font-serif);
+  }
+
+  .entry-content h3 {
+    font-size: 13px;
+    font-weight: 500;
+    margin: 16px 0 4px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .entry-content p {
+    margin: 0 0 14px;
+    color: var(--text-secondary);
+  }
+
+  .entry-content ul, .entry-content ol {
+    padding-left: 20px;
+    margin: 0 0 14px;
+    color: var(--text-secondary);
+  }
+
+  .entry-content li {
+    margin-bottom: 4px;
+    line-height: 1.65;
+  }
+
+  .entry-content strong { color: var(--text); font-weight: 500; }
+
+  .entry-content code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--bg-input);
+    color: var(--accent);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  .entry-content pre {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow-x: auto;
+    margin: 14px 0;
+    line-height: 1.65;
+  }
+
+  .entry-content pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  .entry-content blockquote {
+    border-left: 2px solid var(--border);
+    padding: 8px 18px;
+    margin: 14px 0;
+    background: none;
+    border-radius: 0;
+    color: var(--text-secondary);
+    font-style: italic;
+    font-family: var(--font-serif);
+  }
+
+  .entry-content hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  .entry-content a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+    font-weight: 400;
+    transition: text-decoration-color 0.15s;
+  }
+
+  .entry-content a:hover { text-decoration-color: var(--accent); }
+
+  /* Tags */
+  .entry-content [data-tag] {
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    padding: 0;
+    cursor: default;
+    position: relative;
+    transition: background 0.4s, outline 0.4s;
+  }
+
+  /* Soft highlight when hovering a tag name in the inspector */
+  .entry-content [data-tag].tag-flash {
+    background: var(--purple-bg);
+    border-radius: 3px;
+  }
+
+  /* Stronger "you are here" highlight for the current arrow-navigated occurrence */
+  .entry-content [data-tag].tag-jump-current {
+    background: var(--purple-bg);
+    outline: 2px solid var(--accent);
+    border-radius: 3px;
+  }
+
+  /* (Tag hover tooltip removed — tags are now managed via the inspector cards) */
+
+  /* Tag pills used in filter rows and tag modal */
+  .tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    border: 1px solid var(--purple-border);
+    background: var(--purple-bg);
+    color: var(--purple);
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .tag-pill:hover { background: var(--purple); color: white; border-color: var(--purple); }
+  .tag-pill.active { background: var(--purple); color: white; border-color: var(--purple); }
+
+  .tag-pill .tag-count {
+    font-size: 10px;
+    background: rgba(196, 121, 90, 0.15);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+
+  .tag-pill.active .tag-count { background: rgba(255,255,255,0.2); }
+
+  /* ── Tags Page ── */
+
+  .tags-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-tertiary);
+    margin-bottom: 20px;
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tags-breadcrumb span {
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .tags-breadcrumb span:hover { color: var(--accent); }
+  .tags-breadcrumb .bc-sep { cursor: default; color: var(--text-tertiary); font-size: 11px; }
+  .tags-breadcrumb .bc-current { color: var(--text); font-weight: 400; cursor: default; font-family: var(--font-serif); }
+
+  /* View transition animation */
+  @keyframes tagViewFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  #tags-view-container > * {
+    animation: tagViewFadeIn 0.25s ease-out;
+  }
+
+  /* Tag card grid — the "all tags" root view */
+  .tags-folder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+  }
+
+  .tag-folder {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 22px;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+    user-select: none;
+    text-align: left;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+  }
+
+  .tag-folder:hover { border-color: var(--text-tertiary); }
+
+  .tag-folder-icon {
+    display: none;
+  }
+
+  .tag-folder-name {
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--text);
+    word-break: break-word;
+    line-height: 1.3;
+    font-family: var(--font-serif);
+    margin-bottom: 6px;
+  }
+
+  .tag-folder-count {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.01em;
+  }
+
+  /* File list — the "inside a tag" detail view */
+  .tag-file-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg-card);
+  }
+
+  .tag-file-header {
+    display: grid;
+    grid-template-columns: 1fr 140px 100px 72px;
+    padding: 8px 18px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+    user-select: none;
+    cursor: pointer;
+    background: var(--bg);
+  }
+
+  .tag-file-header span:hover { color: var(--text-secondary); }
+  .tag-file-header .sort-active { color: var(--text); }
+
+  .tag-file-row {
+    display: grid;
+    grid-template-columns: 1fr 140px 100px 72px;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.15s;
+    font-size: 13px;
+  }
+
+  .tag-file-row:last-child { border-bottom: none; }
+  .tag-file-row:hover { background: var(--bg-hover); }
+
+  .tag-file-text {
+    color: var(--text);
+    line-height: 1.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 16px;
+  }
+
+  .tag-file-text .file-icon {
+    display: none;
+  }
+
+  .tag-file-source {
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tag-file-date {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
+  }
+
+  /* ── Tag detail header — single row: back arrow, tag name, count, actions ── */
+  .tag-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .tag-detail-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+    font-family: inherit;
+    padding: 0;
+  }
+  .tag-detail-back:hover { color: var(--text); background: var(--bg-hover); }
+
+  .tag-detail-title {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .tag-detail-count {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+
+  .tag-detail-actions-inline {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Tag item card — square card used inside a tag detail view */
+  .tag-item-card {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tag-item-card-text {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.55;
+    flex: 1;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    padding-right: 28px;
+  }
+
+  .tag-item-card-meta {
+    margin-top: auto;
+    padding-top: 10px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+  }
+
+  .tag-item-card-meta .card-date {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .tag-item-card-go {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text-tertiary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    text-decoration: none;
+    padding: 0;
+    font-family: inherit;
+    line-height: 1;
+  }
+
+  .tag-item-card-go:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Tag removal mode */
+  .tag-remove-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 400;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .tag-remove-btn:hover { border-color: var(--red-border); color: var(--red); background: var(--red-bg); }
+
+  .tag-item-card.selectable {
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .tag-item-card.selectable:hover {
+    border-color: var(--red-border);
+  }
+  .tag-item-card.selectable.selected {
+    border-color: var(--red);
+    box-shadow: 0 0 0 2px var(--red-bg);
+  }
+  .tag-item-card.selectable .tag-item-card-go { display: none; }
+
+  .tag-card-check {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: transparent;
+    transition: all 0.15s;
+  }
+  .tag-item-card.selectable.selected .tag-card-check {
+    border-color: var(--red);
+    background: var(--red);
+    color: white;
+  }
+
+  .tag-confirm-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+  .tag-confirm-bar .tag-confirm-count { font-weight: 600; color: var(--red); }
+  .tag-confirm-bar button {
+    padding: 4px 12px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+  }
+  .tag-confirm-bar .tag-confirm-delete {
+    background: var(--red);
+    color: white;
+    border-color: var(--red);
+  }
+  .tag-confirm-bar .tag-confirm-delete:hover { opacity: 0.85; }
+  .tag-confirm-bar .tag-confirm-cancel {
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  .tag-confirm-bar .tag-confirm-cancel:hover { border-color: var(--text-tertiary); color: var(--text); }
+
+  /* Selection toolbar */
+  .selection-toolbar {
+    position: fixed;
+    z-index: 200;
+    display: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 4px;
+    gap: 2px;
+  }
+
+  .selection-toolbar.visible { display: flex; }
+
+  .selection-toolbar button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: none;
+    background: none;
+    color: var(--purple);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: background 0.12s;
+    font-family: inherit;
+  }
+
+  .selection-toolbar button:hover { background: var(--purple-bg); }
+
+  /* Tag modal */
+  .tag-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 250;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tag-modal-overlay.visible { display: flex; }
+
+  .tag-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    padding: 24px;
+    width: 380px;
+    max-width: 90vw;
+  }
+
+  .tag-modal h3 {
+    font-size: 17px;
+    font-weight: 400;
+    margin-bottom: 4px;
+    font-family: var(--font-serif);
+  }
+
+  .tag-modal .modal-subtitle {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+  }
+
+  .tag-modal .modal-preview {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    max-height: 80px;
+    overflow: hidden;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  .tag-modal label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .tag-modal input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-input);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .tag-modal input[type="text"]:focus { border-color: var(--text-tertiary); }
+
+  .tag-modal .existing-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+    margin-bottom: 16px;
+  }
+
+  .tag-modal .existing-tags .tag-pill { font-size: 11px; padding: 3px 10px; }
+
+  .tag-modal .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .tag-modal .modal-actions button {
+    padding: 8px 18px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .tag-modal .btn-cancel {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  .tag-modal .btn-cancel:hover { background: var(--bg-hover); }
+
+  .tag-modal .btn-apply {
+    background: var(--purple);
+    border: 1px solid var(--purple);
+    color: white;
+  }
+
+  .tag-modal .btn-apply:hover { background: #a8614a; }
+  .tag-modal .btn-apply:disabled { opacity: 0.4; cursor: default; }
+
+  /* Folder connection status */
+  .folder-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin: 4px 0;
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+  }
+
+  .folder-status.disconnected {
+    color: var(--yellow);
+    background: var(--yellow-bg);
+    border: 1px dashed var(--yellow-border);
+  }
+
+  .folder-status.disconnected:hover { background: var(--yellow-border); }
+
+  .folder-status.connected {
+    color: var(--green);
+    background: var(--green-bg);
+    border: 1px solid var(--green-border);
+  }
+
+  .folder-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .disconnected .folder-status-dot { background: var(--yellow); }
+  .connected .folder-status-dot { background: var(--green); }
+
+  /* Library view (Home page) — card grid */
+  .library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .library-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .library-card:hover {
+    border-color: var(--text-tertiary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .library-card-date {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .library-card-preview {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
+  }
+
+  .library-card-source {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Search */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 14px;
+    margin-bottom: 20px;
+    transition: border-color 0.15s;
+  }
+
+  .search-bar:focus-within { border-color: var(--text-tertiary); }
+
+  .search-icon { color: var(--text-tertiary); font-size: 14px; flex-shrink: 0; }
+
+  .search-input {
+    flex: 1;
+    border: none;
+    background: none;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+  }
+
+  .search-input::placeholder { color: var(--text-tertiary); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-tertiary);
+  }
+
+  .empty-state-icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-state-text { font-size: 14px; line-height: 1.6; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--text);
+    color: var(--bg);
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-md);
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 300;
+  }
+
+  .toast.visible { transform: translateY(0); opacity: 1; }
+
+  /* Loading */
+  .loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    gap: 10px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  /* Settings */
+  .settings-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .settings-section h2 {
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+    font-family: var(--font-serif);
+  }
+
+  .settings-section p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+
+  .settings-section p:last-child { margin-bottom: 0; }
+
+  .update-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-sans);
+  }
+
+  .update-btn:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .update-btn:disabled { opacity: 0.5; cursor: default; }
+
+  .update-btn .spinner {
+    display: none;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  .update-btn.loading .spinner { display: inline-block; }
+  .update-btn.loading .btn-label { display: none; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .update-result {
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    line-height: 1.5;
+    font-family: var(--font-mono);
+    display: none;
+  }
+
+  .update-result.visible { display: block; }
+  .update-result.success { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
+  .update-result.error { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
+  .update-result.no-change { background: var(--blue-bg); border: 1px solid var(--blue-border); color: var(--blue); }
+
+  .update-version-tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: var(--blue-bg);
+    border: 1px solid var(--blue-border);
+    color: var(--blue);
+    margin-bottom: 12px;
+  }
+  .update-version-tag:empty { display: none; }
+
+  /* Apple Notes Import */
+  .import-setting {
+    margin-bottom: 18px;
+  }
+
+  .import-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .import-hint {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+
+  .import-input {
+    width: 100%;
+    max-width: 320px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font-mono);
+    transition: border-color 0.15s;
+  }
+
+  .import-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .import-toggle-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    min-width: 42px;
+    height: 24px;
+    margin-top: 2px;
+  }
+
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+
+  .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+  .import-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .import-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-sans);
+    border: 1px solid transparent;
+  }
+
+  .import-btn .spinner {
+    display: none;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  .import-btn.loading .spinner { display: inline-block; }
+  .import-btn.loading .btn-label { display: none; }
+
+  .import-btn-primary {
+    background: var(--orange, #e67e22);
+    color: white;
+    border-color: var(--orange, #e67e22);
+  }
+
+  .import-btn-primary:hover { opacity: 0.9; }
+  .import-btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+  .import-btn-secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+
+  .import-btn-secondary:hover { background: var(--bg-hover); }
+  .import-btn-secondary:disabled { opacity: 0.5; cursor: default; }
+  .import-btn-secondary .spinner {
+    border-color: rgba(0,0,0,0.2);
+    border-top-color: var(--text-secondary);
+  }
+
+  .import-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .import-preview-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 0 4px;
+  }
+
+  .import-preview-list {
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    font-size: 12px;
+  }
+
+  .import-preview-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
+  }
+
+  .import-preview-item:last-child { border-bottom: none; }
+
+  .import-preview-item .note-title {
+    color: var(--text);
+    font-weight: 400;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .import-preview-item .note-folder {
+    color: var(--text-secondary);
+    margin-left: 12px;
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+
+  .import-preview-item .note-date {
+    color: var(--text-secondary);
+    margin-left: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .import-result {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .import-result.success { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green); }
+  .import-result.error { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
+
+  /* Collapsible section */
+  .collapsible-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    font-family: var(--font-serif);
+    transition: all 0.15s;
+    text-align: left;
+    margin-bottom: 0;
+  }
+
+  .collapsible-toggle:hover { background: var(--bg-hover); color: var(--text); }
+
+  .collapsible-arrow {
+    font-size: 11px;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .collapsible-toggle.open .collapsible-arrow { transform: rotate(90deg); }
+  .collapsible-toggle.open { border-radius: var(--radius-lg) var(--radius-lg) 0 0; margin-bottom: 0; border-bottom-color: var(--border-light); }
+
+  .collapsible-body {
+    display: none;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    background: var(--bg-card);
+    padding: 0;
+    margin-bottom: 20px;
+  }
+
+  .collapsible-body.open { display: block; }
+
+  .collapsible-body .settings-section {
+    border: none;
+    border-radius: 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-light);
+    box-shadow: none;
+  }
+
+  .collapsible-body .settings-section:last-child { border-bottom: none; }
+
+  /* Tip callout */
+  .settings-tip {
+    display: flex;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--blue-bg);
+    border: 1px solid var(--blue-border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--blue);
+    line-height: 1.6;
+    margin-top: 12px;
+  }
+
+  .settings-tip-icon { flex-shrink: 0; font-size: 15px; }
+
+  .settings-section code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--bg-input);
+    color: var(--accent);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  .settings-section pre {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    overflow-x: auto;
+    margin: 12px 0;
+    line-height: 1.65;
+  }
+
+  .settings-section pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  /* Stat row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    font-family: var(--font-serif);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Responsive */
+  .mobile-toggle {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 150;
+    padding: 8px;
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 900px) {
+    .slideshow-layout { flex-direction: column; height: auto; min-height: auto; }
+    .thumb-panel { width: 100%; min-width: 100%; max-height: 200px; border-right: none; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; overflow-y: hidden; }
+    .thumb-item { border-bottom: none; border-right: 1px solid var(--border-light); min-width: 200px; }
+    .thumb-item.active { box-shadow: inset 0 -3px 0 var(--accent); }
+    .thumb-month-header { display: none; }
+    .detail-panel { padding: 16px; }
+    .inspector-cards { display: none !important; }
+  }
+
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; padding: 20px; padding-top: 56px; max-width: 100%; }
+    .mobile-toggle { display: block; }
+    .stats-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<button class="mobile-toggle" onclick="toggleSidebar()">&#9776;</button>
+
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand disconnected" id="sidebar-brand" onclick="connectFolder()" style="cursor:pointer;" title="Click to connect a folder">
+        <div class="sidebar-logo disconnected" id="sidebar-logo"><span class="sidebar-logo-dot"></span></div>
+        <div>
+          <div class="sidebar-title" id="sidebar-brand-title">Entries</div>
+          <div class="sidebar-subtitle" id="sidebar-brand-subtitle">Connect a folder to save tags</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Navigation</div>
+      <div class="nav-item active" data-page="home" onclick="navigate('home')">
+        <span class="nav-icon">&#9679;</span>
+        Library
+      </div>
+      <div class="nav-item" data-page="tags" onclick="navigate('tags')">
+        <span class="nav-icon">&#9873;</span>
+        Tags
+        <span class="nav-badge" id="nav-tag-count">0</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Notebooks</div>
+      <div id="nav-notebooks"></div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">System</div>
+      <div class="nav-item" data-page="settings" onclick="navigate('settings')">
+        <span class="nav-icon">&#9881;</span>
+        Settings
+      </div>
+    </div>
+
+    <div class="sidebar-footer" style="margin-top:auto;">
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <span class="nav-icon" id="theme-icon">&#9790;</span>
+        <span id="theme-label">Dark mode</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- HOME: Library of all entries across notebooks -->
+    <div class="page active" id="page-home">
+      <div class="page-header">
+        <div class="page-title">Library</div>
+        <div class="page-tagline">All entries, most recent first</div>
+      </div>
+
+      <div class="stats-row" id="home-stats"></div>
+
+      <div class="search-bar">
+        <span class="search-icon">&#128269;</span>
+        <input class="search-input" id="timeline-search" type="text" placeholder="Search notes..." oninput="renderTimeline()">
+      </div>
+
+      <div id="timeline-container">
+        <div class="loading-spinner"><div class="spinner"></div>Loading notes...</div>
+      </div>
+    </div>
+
+    <!-- NOTEBOOK PAGES (generated per .md file) -->
+    <div id="notebook-pages-container"></div>
+
+    <!-- TAGS PAGE — Finder-inspired -->
+    <div class="page" id="page-tags">
+      <div class="page-header">
+        <div class="page-title">Tags</div>
+        <div class="page-tagline">Browse all tagged content across notebooks</div>
+      </div>
+
+      <div class="tags-breadcrumb" id="tags-breadcrumb"></div>
+
+      <div id="tags-view-container">
+        <div class="empty-state">
+          <div class="empty-state-icon">&#9873;</div>
+          <div class="empty-state-text">No tags yet. Select text in any entry and click the tag button to create one.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <div class="page-title">Settings</div>
+        <div class="page-tagline">Configuration, import, and reference</div>
+      </div>
+
+      <!-- ── GETTING STARTED ── -->
+
+      <div class="settings-section" style="border-left: 3px solid var(--green); border-color: var(--green);">
+        <h2>Getting Started</h2>
+        <p>Download the app from the <strong>Releases</strong> page on GitHub. Open the <code>.dmg</code> (Mac) or run the <code>.exe</code> installer (Windows). On launch, click <strong>"Connect folder"</strong> in the sidebar and select your project folder — the one containing an <code>entries/</code> directory. The app remembers your folder permanently.</p>
+        <p>From there, any <code>.md</code> files in <code>entries/</code> appear as notebooks, and any subfolders containing <code>.md</code> files appear as directory notebooks. You can also import notes directly from Apple Notes using the section below.</p>
+      </div>
+
+      <!-- ── APPLE NOTES IMPORT ── -->
+
+      <div class="settings-section" id="apple-notes-section" style="border-left: 3px solid var(--orange); border-color: var(--orange);">
+        <h2>Import from Apple Notes</h2>
+        <p id="apple-notes-description">Import notes directly from Apple Notes into a directory notebook. Each note becomes its own <code>.md</code> file with a date prefix, automatically organized as a notebook.</p>
+
+        <div id="apple-notes-unavailable" style="display: none;">
+          <p style="opacity: 0.6; font-style: italic;">Apple Notes import is only available in the macOS desktop app.</p>
+        </div>
+
+        <div id="apple-notes-controls" style="display: none;">
+          <div class="import-setting">
+            <label class="import-label">Notebook name</label>
+            <span class="import-hint">The folder name inside <code>entries/</code> for imported notes</span>
+            <input type="text" id="import-notebook-name" class="import-input" value="apple-notes" placeholder="apple-notes" />
+          </div>
+
+          <div class="import-setting">
+            <label class="import-label">Date prefix format</label>
+            <span class="import-hint">Date format for filenames. Use YYYY, MM, DD. Leave blank for no prefix.</span>
+            <input type="text" id="import-date-format" class="import-input" value="YYYY-MM-DD" placeholder="YYYY-MM-DD" />
+          </div>
+
+          <div class="import-setting import-toggle-row">
+            <div>
+              <label class="import-label">Include recently deleted notes</label>
+              <span class="import-hint">Import notes from the "Recently Deleted" folder</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="import-include-trashed" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="import-actions">
+            <button class="import-btn import-btn-secondary" id="import-preview-btn" onclick="previewAppleNotes()">
+              <span class="btn-label">Preview notes</span>
+              <span class="spinner"></span>
+            </button>
+            <button class="import-btn import-btn-primary" id="import-run-btn" onclick="runAppleNotesImport()">
+              <span class="btn-label">Import notes</span>
+              <span class="spinner"></span>
+            </button>
+          </div>
+
+          <div id="import-preview-results" style="display: none;">
+            <div class="import-preview-header">
+              <span id="import-preview-count"></span>
+              <button class="import-preview-close" onclick="document.getElementById('import-preview-results').style.display='none';">&times;</button>
+            </div>
+            <div id="import-preview-list" class="import-preview-list"></div>
+          </div>
+
+          <div id="import-result" class="import-result" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- ── UPDATES ── -->
+
+      <div class="settings-section" id="update-section" style="border-left: 3px solid var(--accent); border-color: var(--accent);">
+        <h2>Updates</h2>
+        <p id="update-description">Check for new releases published on GitHub. If a newer version is available, you'll see a download link.</p>
+        <div id="update-version-display" class="update-version-tag"></div>
+        <button class="update-btn" id="update-btn" onclick="checkForUpdates()">
+          <span class="btn-label">Check for updates</span>
+          <span class="spinner"></span>
+        </button>
+        <div class="update-result" id="update-result"></div>
+
+        <!-- GitHub repo config (collapsed) -->
+        <div class="import-setting" style="margin-top: 20px;">
+          <label class="import-label">GitHub repository</label>
+          <span class="import-hint">The <code>owner/repo</code> path used for update checks (e.g. <code>marcuskidan/entries</code>)</span>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="text" id="github-repo-input" class="import-input" placeholder="owner/repo" style="max-width: 260px;" />
+            <button class="import-btn import-btn-secondary" style="padding: 8px 14px; font-size: 12px;" onclick="saveGitHubRepo()">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── HOW IT WORKS ── -->
+
+      <div class="settings-section">
+        <h2>How It Works</h2>
+        <p>The app scans your connected folder's <code>entries/</code> directory and discovers two types of notebooks automatically:</p>
+        <p><strong>Single-file notebooks</strong> — A <code>.md</code> file in <code>entries/</code> where each <code># MM-DD-YYYY</code> heading marks a new entry. Everything between two date headings is one entry. The filename becomes the notebook name.</p>
+        <p><strong>Directory notebooks</strong> — A subfolder inside <code>entries/</code> where each <code>.md</code> file is one entry. The date is parsed from the filename prefix (e.g. <code>2026-04-10 Sprint Retro.md</code>). The folder name becomes the notebook name. This is the format produced by the Apple Notes importer.</p>
+        <p>All entries from all notebooks are merged into the Library timeline and are fully searchable. Drop new files or folders into <code>entries/</code> and they appear on reload — no configuration needed.</p>
+        <div class="settings-tip">
+          <span class="settings-tip-icon">&#9729;</span>
+          <span>Point the app at a cloud-synced folder (like iCloud Drive, Dropbox, or OneDrive) and your notebooks are automatically backed up and accessible from any device. Your <code>.md</code> files stay as plain text — no lock-in.</span>
+        </div>
+      </div>
+
+      <!-- ── NOTEBOOK FORMAT ── -->
+
+      <div class="settings-section">
+        <h2>Notebook Formats</h2>
+        <p><strong>Single-file format</strong> — best for notes you write by hand. Start each entry with a date heading:</p>
+        <pre><code># 04-10-2026
+
+- Discussed API versioning strategy
+- Action item: draft RFC by Friday
+
+# 04-03-2026
+
+- Sprint retro
+- Shipped auth flow to staging</code></pre>
+        <p><strong>Directory format</strong> — best for imported content. Each file is one entry, with the date in the filename:</p>
+        <pre><code>entries/
+  imported-notes/
+    2026-04-10 Sprint Planning.md
+    2026-04-03 Design Review.md
+    2026-03-28 Retro.md</code></pre>
+        <p>Supported filename date formats: <code>YYYY-MM-DD</code>, <code>YYYYMMDD</code>, and <code>MM-DD-YYYY</code>. The separator between the date and title can be a space, hyphen, or underscore. Files without a recognizable date prefix are skipped.</p>
+        <p><code>SCHEMA.md</code> and <code>SYSTEM.md</code> are excluded from notebooks automatically.</p>
+      </div>
+
+      <!-- ── TAGGING ── -->
+
+      <div class="settings-section" style="border-left: 3px solid var(--purple); border-color: var(--purple);">
+        <h2>Tagging</h2>
+        <p>Highlight text in any entry and click the <strong>"Tag selection"</strong> toolbar that appears. Type a tag name (or pick an existing one) and press <strong>Apply Tag</strong>. Tags save directly to your <code>.md</code> files as standard HTML <code>&lt;span&gt;</code> elements — portable, version-control friendly, and compatible with any markdown tool:</p>
+        <pre><code>&lt;span data-tag="action-item"&gt;Marcus to draft the RFC by Monday&lt;/span&gt;
+&lt;span data-tag="decision"&gt;Go with **Option B** for navigation&lt;/span&gt;</code></pre>
+        <p>Tags work in both single-file and directory notebooks. The <strong>Tags</strong> page in the sidebar gives a cross-notebook view of all tagged content — click any item to jump to its source entry.</p>
+        <p>Tag names are lowercased with spaces converted to hyphens. Some common conventions: <code>action-item</code>, <code>decision</code>, <code>blocker</code>, <code>follow-up</code>, <code>idea</code>, <code>risk</code>. You can use any names — new tags are created on the fly.</p>
+      </div>
+
+      <!-- ── BUILDING & RELEASING ── -->
+
+      <div class="settings-section">
+        <h2>Building &amp; Releasing</h2>
+        <p>The app is built with <strong>Tauri v2</strong> and includes a GitHub Actions workflow that builds installers for Mac (Apple Silicon + Intel) and Windows whenever a version is tagged. To publish a release:</p>
+        <pre><code>git tag v0.2.0
+git push origin v0.2.0</code></pre>
+        <p>GitHub builds the <code>.dmg</code> and <code>.exe</code> files and publishes them on the repo's <strong>Releases</strong> page. The in-app update checker (above) compares the user's installed version against the latest GitHub Release and provides a download link when a new version is available.</p>
+      </div>
+
+      <!-- ── LOCAL DEVELOPMENT (collapsed) ── -->
+
+      <button class="collapsible-toggle" onclick="this.classList.toggle('open'); this.nextElementSibling.classList.toggle('open');">
+        <span class="collapsible-arrow">&#9656;</span>
+        Local development &amp; iterating without rebuilding
+      </button>
+      <div class="collapsible-body">
+        <div class="settings-section">
+          <h2>Browser development</h2>
+          <p>For day-to-day UI work, serve <code>dist/</code> locally and open it in a browser — no Tauri rebuild needed:</p>
+          <pre><code>cd dist &amp;&amp; python3 -m http.server 8080</code></pre>
+          <p>You'll get the full UI without Tauri-specific features (native file picker, Apple Notes import, update checker). In Chrome or Edge, click <strong>"Connect folder"</strong> to grant read/write access via the File System Access API.</p>
+        </div>
+
+        <div class="settings-section">
+          <h2>Tauri hot reload</h2>
+          <p>To test desktop-specific features, run the Tauri dev server:</p>
+          <pre><code>cargo tauri dev</code></pre>
+          <p>This compiles the Rust backend and opens the app with hot-reload. You'll need Rust and the Tauri CLI (<code>cargo install tauri-cli --version "^2"</code>).</p>
+          <p>A full rebuild (<code>cargo tauri build</code>) is only needed when the Rust backend changes — anything in <code>src-tauri/src/</code>, <code>Cargo.toml</code>, or <code>tauri.conf.json</code>.</p>
+        </div>
+      </div>
+
+      <!-- ── BROWSER FALLBACK (collapsed) ── -->
+
+      <button class="collapsible-toggle" onclick="this.classList.toggle('open'); this.nextElementSibling.classList.toggle('open');">
+        <span class="collapsible-arrow">&#9656;</span>
+        Running in a browser (without the desktop app)
+      </button>
+      <div class="collapsible-body">
+        <div class="settings-section">
+          <h2>Browser mode</h2>
+          <p>The viewer works in Chrome or Edge without the desktop app. Serve the project with a local server (<code>python3 -m http.server 8000</code>) and open <code>http://localhost:8000</code>. Click <strong>"Connect folder"</strong> to grant file access.</p>
+          <p>Browser limitations: folder connection doesn't persist between sessions, Apple Notes import and update checking are unavailable, Safari/Firefox save tags via file download rather than writing in place, and directory notebooks require the File System Access API (Chrome/Edge).</p>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<!-- Floating inspector cards -->
+<div class="inspector-cards hidden" id="inspector-cards">
+  <div class="inspector-card" id="inspector-card-notebook">
+    <div class="inspector-card-title">Notebook</div>
+    <div class="inspector-field">
+      <label class="inspector-label">Name</label>
+      <div class="inspector-editable" id="inspector-nb-name-display">
+        <span class="inspector-editable-value" id="inspector-nb-name-val"></span>
+        <button class="inspector-edit-btn" onclick="startEditField('nb-name')" title="Edit name">&#9998;</button>
+      </div>
+      <input class="inspector-input" id="inspector-nb-name-input" style="display:none" onblur="commitEditField('nb-name')" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelEditField('nb-name')">
+    </div>
+    <div class="inspector-field">
+      <label class="inspector-label">Icon</label>
+      <div class="inspector-icon-picker" id="inspector-nb-icons"></div>
+    </div>
+  </div>
+
+  <div class="inspector-card" id="inspector-card-entry">
+    <div class="inspector-card-title">Entry</div>
+    <div id="inspector-entry-fields">
+      <div class="inspector-tag-empty">Select an entry</div>
+    </div>
+  </div>
+
+  <div class="inspector-card" id="inspector-card-tags">
+    <div class="inspector-card-title">Tags</div>
+    <div class="inspector-tag-list" id="inspector-tags">
+      <div class="inspector-tag-empty">No entry selected</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Selection toolbar (appears near highlighted text) -->
+<div class="selection-toolbar" id="selection-toolbar">
+  <button onclick="openTagModal()">&#9873; Tag selection</button>
+</div>
+
+<!-- Tag modal -->
+<div class="tag-modal-overlay" id="tag-modal-overlay">
+  <div class="tag-modal">
+    <h3>Add Tag</h3>
+    <div class="modal-subtitle">Wrap your selection in a named tag</div>
+    <div class="modal-preview" id="tag-modal-preview"></div>
+    <label for="tag-name-input">Tag name</label>
+    <input type="text" id="tag-name-input" placeholder="e.g. action-item, decision, blocker..." oninput="validateTagInput()" onkeydown="if(event.key==='Enter')applyTag()">
+    <div class="existing-tags" id="tag-modal-existing"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeTagModal()">Cancel</button>
+      <button class="btn-apply" id="tag-apply-btn" onclick="applyTag()" disabled>Apply Tag</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+
+// NOTEBOOKS is populated dynamically by discoverNotebooks().
+// Any .md file inside entries/ becomes a notebook automatically.
+// No registration needed — just drop a file in the folder.
+let NOTEBOOKS = [];
+
+// Icon palette — cycles through these for discovered notebooks
+const NB_ICONS = ['&#9998;', '&#9737;', '&#9733;', '&#9830;', '&#9827;', '&#9829;', '&#9824;'];
+
+// ============================================================
+// TAURI BRIDGE — detect if running inside Tauri
+// ============================================================
+
+const IS_TAURI = Boolean(window.__TAURI_INTERNALS__);
+
+// Tauri v2 injects __TAURI_INTERNALS__ with invoke built in.
+// We use it directly — no npm/import needed for a single-file app.
+
+async function tauriInvoke(cmd, args) {
+  return window.__TAURI_INTERNALS__.invoke(cmd, args);
+}
+
+// For the folder picker dialog, Tauri v2 plugin-dialog exposes
+// a JS command we invoke through the standard invoke bridge.
+async function tauriPickFolder() {
+  // plugin-dialog v2 registers an 'open' command under plugin:dialog namespace.
+  // The command expects all options nested inside an 'options' key.
+  return window.__TAURI_INTERNALS__.invoke('plugin:dialog|open', {
+    options: {
+      directory: true,
+      multiple: false,
+      title: 'Select your project folder (the one with entries/)',
+    }
+  });
+}
+
+// The root folder path (persisted via Tauri config commands)
+let rootFolder = null;
+
+// ============================================================
+// NOTEBOOK DISCOVERY — Scans entries/ for .md files
+// ============================================================
+
+function notebookIdFromFilename(filename) {
+  return filename.replace(/\.md$/i, '');
+}
+
+function notebookNameFromFilename(filename) {
+  // "meeting-notes.md" → "Meeting Notes"
+  return filename.replace(/\.md$/i, '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+async function discoverNotebooks() {
+  let fileNotebooks = [];
+  let dirNotebooks = [];
+
+  // ── Tauri path: use Rust commands for native filesystem access ──
+  if (IS_TAURI && rootFolder) {
+    try {
+      // Discover single-file notebooks
+      const foundFiles = await tauriInvoke('list_notebooks', { root: rootFolder });
+      fileNotebooks = foundFiles.map(name => ({
+        id: notebookIdFromFilename(name),
+        file: `entries/${name}`,
+        name: notebookNameFromFilename(name),
+        absPath: rootFolder + '/entries/' + name,
+        type: 'file',
+      }));
+
+      // Discover directory-based notebooks
+      try {
+        const foundDirs = await tauriInvoke('list_notebook_dirs', { root: rootFolder });
+        for (const dirName of foundDirs) {
+          const entryFiles = await tauriInvoke('list_dir_entries', { root: rootFolder, dir_name: dirName });
+          dirNotebooks.push({
+            id: 'dir-' + notebookIdFromFilename(dirName),
+            file: `entries/${dirName}`,
+            name: notebookNameFromFilename(dirName),
+            absDir: rootFolder + '/entries/' + dirName,
+            type: 'directory',
+            entryFiles: entryFiles.map(f => ({
+              name: f,
+              absPath: rootFolder + '/entries/' + dirName + '/' + f,
+            })),
+          });
+        }
+      } catch (e) {
+        console.info('Directory notebook discovery failed:', e);
+      }
+
+      const all = [...fileNotebooks, ...dirNotebooks];
+      if (all.length > 0) {
+        NOTEBOOKS = all.map((nb, i) => ({ ...nb, icon: NB_ICONS[i % NB_ICONS.length] }));
+        console.info(`Discovered ${fileNotebooks.length} file notebook(s) and ${dirNotebooks.length} directory notebook(s) via Tauri`);
+        return;
+      }
+    } catch (e) {
+      console.info('Tauri discovery failed:', e);
+    }
+  }
+
+  // ── Browser path: File System Access API (folder already connected) ──
+  if (dirHandle) {
+    try {
+      const entriesDir = await dirHandle.getDirectoryHandle('entries');
+
+      // Discover single-file notebooks
+      for await (const entry of entriesDir.values()) {
+        if (entry.kind === 'file' && entry.name.endsWith('.md')
+            && entry.name !== 'SCHEMA.md' && entry.name !== 'SYSTEM.md') {
+          fileNotebooks.push({
+            id: notebookIdFromFilename(entry.name),
+            file: `entries/${entry.name}`,
+            name: notebookNameFromFilename(entry.name),
+            type: 'file',
+          });
+        }
+      }
+
+      // Discover directory-based notebooks
+      for await (const entry of entriesDir.values()) {
+        if (entry.kind === 'directory' && !entry.name.startsWith('.')) {
+          try {
+            const subDir = await entriesDir.getDirectoryHandle(entry.name);
+            const entryFiles = [];
+            for await (const sub of subDir.values()) {
+              if (sub.kind === 'file' && sub.name.endsWith('.md')) {
+                entryFiles.push({ name: sub.name });
+              }
+            }
+            if (entryFiles.length > 0) {
+              entryFiles.sort((a, b) => a.name.localeCompare(b.name));
+              dirNotebooks.push({
+                id: 'dir-' + notebookIdFromFilename(entry.name),
+                file: `entries/${entry.name}`,
+                name: notebookNameFromFilename(entry.name),
+                type: 'directory',
+                entryFiles,
+                dirName: entry.name,
+              });
+            }
+          } catch (e) { /* skip inaccessible dirs */ }
+        }
+      }
+
+      const all = [...fileNotebooks, ...dirNotebooks];
+      all.sort((a, b) => a.name.localeCompare(b.name));
+      if (all.length > 0) {
+        NOTEBOOKS = all.map((nb, i) => ({ ...nb, icon: NB_ICONS[i % NB_ICONS.length] }));
+        console.info(`Discovered ${fileNotebooks.length} file + ${dirNotebooks.length} dir notebook(s) via File System Access API`);
+        return;
+      }
+    } catch (e) {
+      console.info('File System Access discovery failed, trying HTTP:', e.message);
+    }
+  }
+
+  // ── Browser fallback: HTTP directory listing (file notebooks only) ──
+  try {
+    const resp = await fetch('entries/');
+    if (resp.ok) {
+      const html = await resp.text();
+      const linkRe = /href="([^"]+\.md)"/gi;
+      const found = [];
+      let m;
+      while ((m = linkRe.exec(html)) !== null) {
+        const name = decodeURIComponent(m[1]).replace(/^.*\//, '');
+        if (name !== 'SCHEMA.md' && name !== 'SYSTEM.md') {
+          found.push(name);
+        }
+      }
+      if (found.length > 0) {
+        found.sort();
+        NOTEBOOKS = found.map((name, i) => ({
+          id: notebookIdFromFilename(name),
+          file: `entries/${name}`,
+          name: notebookNameFromFilename(name),
+          icon: NB_ICONS[i % NB_ICONS.length],
+          type: 'file',
+        }));
+        console.info(`Discovered ${found.length} notebook(s) via HTTP directory listing`);
+        return;
+      }
+    }
+  } catch (e) {
+    console.info('HTTP directory discovery failed:', e.message);
+  }
+
+  if (IS_TAURI) {
+    console.warn('No folder selected yet. Click "Connect folder" to get started.');
+  } else if (location.protocol === 'file:') {
+    console.warn('Opened as file:// — cannot discover notebooks. Use start.command or python3 -m http.server.');
+  } else {
+    console.warn('No notebooks discovered. Add .md files to entries/ and reload.');
+  }
+}
+
+// ============================================================
+// STATE
+// ============================================================
+
+let currentPage = "home";
+let allEntries = [];       // Flat array of all parsed entries across all notebooks
+let notebookEntries = {};  // Keyed by notebook id
+let selectedEntry = {};    // Tracks selected entry index per notebook
+let allTags = {};          // { tagName: [ { text, entry, notebookId, date } ... ] }
+let activeTagFilter = null;
+let pendingSelection = null; // Stores selection info for tagging
+let dirHandle = null;        // File System Access API directory handle
+let rawNotebookTexts = {};   // Raw .md content keyed by notebook id (for rewriting)
+let rawDirNotebookTexts = {}; // For directory notebooks: { notebookId: { filename: text } }
+
+// ============================================================
+// MARKDOWN PARSER (lightweight, no dependencies)
+// ============================================================
+
+function parseMd(text) {
+  // Simple markdown to HTML — handles the basics for entries
+  let html = text;
+
+  // Protect <span data-tag="...">...</span> from being mangled by the parser.
+  // We replace them with placeholders, then restore after all other transforms.
+  // Handles nested tags by finding balanced open/close pairs from the outside in.
+  const tagSlots = [];
+  function extractTagSpans(src) {
+    const openRe = /<span\s+data-tag="([^"]+)">/;
+    let m;
+    while ((m = openRe.exec(src)) !== null) {
+      const fullStart = m.index;
+      const innerStart = fullStart + m[0].length;
+      let depth = 1, pos = innerStart;
+      while (depth > 0 && pos < src.length) {
+        const nextOpen = src.indexOf('<span', pos);
+        const nextClose = src.indexOf('</span>', pos);
+        if (nextClose === -1) break;
+        if (nextOpen !== -1 && nextOpen < nextClose) {
+          depth++;
+          pos = nextOpen + 5;
+        } else {
+          depth--;
+          if (depth === 0) {
+            const inner = src.substring(innerStart, nextClose);
+            const fullEnd = nextClose + 7;
+            const idx = tagSlots.length;
+            tagSlots.push({ tag: m[1], inner });
+            src = src.substring(0, fullStart) + `%%TAG_SLOT_${idx}%%` + src.substring(fullEnd);
+          } else {
+            pos = nextClose + 7;
+          }
+        }
+      }
+      if (depth > 0) break; // malformed, stop
+    }
+    return src;
+  }
+  html = extractTagSpans(html);
+
+  // Code blocks (fenced)
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+    `<pre><code>${escapeHtml(code.trim())}</code></pre>`
+  );
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Headings (# through ###)
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+  // Bold and italic
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+  // Blockquotes
+  html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+  // Horizontal rules
+  html = html.replace(/^---+$/gm, '<hr>');
+
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+  // Unordered lists
+  html = html.replace(/^(\s*)[-*] (.+)$/gm, '$1<li>$2</li>');
+  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+
+  // Paragraphs — wrap remaining plain text lines
+  html = html.replace(/^(?!<[a-z/])((?!<).+)$/gm, '<p>$1</p>');
+
+  // Clean up empty paragraphs
+  html = html.replace(/<p>\s*<\/p>/g, '');
+
+  // Restore tag spans — process in reverse order so nested (inner) slots
+  // are restored before their outer wrappers, preserving nesting.
+  for (let idx = tagSlots.length - 1; idx >= 0; idx--) {
+    const slot = tagSlots[idx];
+    let parsedInner = slot.inner
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
+    // Restore any nested tag slot placeholders inside this inner content
+    for (let j = tagSlots.length - 1; j >= 0; j--) {
+      if (parsedInner.includes(`%%TAG_SLOT_${j}%%`)) {
+        // Already restored in a prior iteration — the placeholder was replaced
+        // in `html` but we need to also replace it in this inner content
+        const nestedSlot = tagSlots[j];
+        const nestedInner = nestedSlot.inner
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.+?)\*/g, '<em>$1</em>')
+          .replace(/\n/g, '<br>');
+        parsedInner = parsedInner.replace(
+          `%%TAG_SLOT_${j}%%`,
+          `<span data-tag="${nestedSlot.tag}">${nestedInner}</span>`
+        );
+      }
+    }
+    html = html.replace(
+      `%%TAG_SLOT_${idx}%%`,
+      `<span data-tag="${slot.tag}">${parsedInner}</span>`
+    );
+  }
+
+  return html;
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ============================================================
+// DATE PARSER — Splits a .md file into entries by MM-DD-YYYY
+// ============================================================
+
+const DATE_RE = /^#*\s*(\d{2}-\d{2}-\d{4})\s*$/;
+
+function parseNotebook(text, notebookId, notebookName) {
+  // Store raw text for rewriting later
+  rawNotebookTexts[notebookId] = text;
+
+  const lines = text.split('\n');
+  const entries = [];
+  let currentDate = null;
+  let currentLines = [];
+
+  function flushEntry() {
+    if (currentDate && currentLines.length > 0) {
+      const body = currentLines.join('\n').trim();
+      if (body) {
+        const entry = {
+          date: currentDate,
+          dateObj: parseDateStr(currentDate),
+          body: body,
+          html: parseMd(body),
+          preview: body.replace(/<span[^>]*data-tag="[^"]*">/g, '').replace(/<\/span>/g, '')
+                       .replace(/^#+\s*/gm, '').replace(/[-*] /g, '').substring(0, 300),
+          notebook: notebookId,
+          notebookName: notebookName,
+        };
+        entries.push(entry);
+
+        // Collect tags from this entry (supports nested/multi-tagged spans)
+        function collectTags(src) {
+          const openRe = /<span\s+data-tag="([^"]+)">/g;
+          let m;
+          while ((m = openRe.exec(src)) !== null) {
+            const tName = m[1];
+            const innerStart = m.index + m[0].length;
+            // Find the matching </span> accounting for nesting
+            let depth = 1, pos = innerStart;
+            while (depth > 0 && pos < src.length) {
+              const nextOpen = src.indexOf('<span', pos);
+              const nextClose = src.indexOf('</span>', pos);
+              if (nextClose === -1) break;
+              if (nextOpen !== -1 && nextOpen < nextClose) {
+                depth++;
+                pos = nextOpen + 5;
+              } else {
+                depth--;
+                if (depth === 0) {
+                  const innerText = src.substring(innerStart, nextClose);
+                  // Strip any nested tag HTML to get plain text for display
+                  const plainInner = innerText.replace(/<span[^>]*data-tag="[^"]*">/g, '').replace(/<\/span>/g, '');
+                  if (!allTags[tName]) allTags[tName] = [];
+                  allTags[tName].push({
+                    text: plainInner,
+                    entry: entry,
+                    notebookId: notebookId,
+                    notebookName: notebookName,
+                    date: currentDate,
+                  });
+                }
+                pos = nextClose + 7;
+              }
+            }
+          }
+        }
+        collectTags(body);
+      }
+    }
+  }
+
+  for (const line of lines) {
+    const match = line.match(DATE_RE);
+    if (match) {
+      flushEntry();
+      currentDate = match[1];
+      currentLines = [];
+    } else {
+      currentLines.push(line);
+    }
+  }
+
+  flushEntry(); // flush last entry
+  return entries;
+}
+
+function parseDateStr(str) {
+  // MM-DD-YYYY → Date object
+  const [mm, dd, yyyy] = str.split('-');
+  return new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
+}
+
+// ============================================================
+// DIRECTORY NOTEBOOK PARSER
+// ============================================================
+// For directory-based notebooks, each .md file is a single entry.
+// The date is extracted from the filename prefix. Supported formats:
+//   YYYY-MM-DD Title.md        (Obsidian Importer default)
+//   YYYYMMDD Title.md
+//   MM-DD-YYYY Title.md        (matches existing schema convention)
+//   YYYY-MM-DD-Title.md        (hyphen-separated)
+//   YYYY-MM-DD_Title.md        (underscore-separated)
+// If no date is found in the filename, the file is skipped.
+
+const DIR_DATE_PATTERNS = [
+  // YYYY-MM-DD (ISO) — most common from Obsidian Importer
+  { re: /^(\d{4})-(\d{2})-(\d{2})[\s_\-]/, parse: m => ({ mm: m[2], dd: m[3], yyyy: m[1] }) },
+  // YYYYMMDD
+  { re: /^(\d{4})(\d{2})(\d{2})[\s_\-]/, parse: m => ({ mm: m[2], dd: m[3], yyyy: m[1] }) },
+  // MM-DD-YYYY (existing schema format)
+  { re: /^(\d{2})-(\d{2})-(\d{4})[\s_\-]/, parse: m => ({ mm: m[1], dd: m[2], yyyy: m[3] }) },
+];
+
+function parseDateFromFilename(filename) {
+  // Strip .md extension
+  const base = filename.replace(/\.md$/i, '');
+  for (const { re, parse } of DIR_DATE_PATTERNS) {
+    const m = base.match(re);
+    if (m) {
+      const { mm, dd, yyyy } = parse(m);
+      const dateStr = `${mm}-${dd}-${yyyy}`;
+      const dateObj = new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
+      // Validate the date is real
+      if (!isNaN(dateObj.getTime())) {
+        // Extract title from remainder of filename
+        const remainder = base.substring(m[0].length).replace(/[-_]+/g, ' ').trim();
+        return { dateStr, dateObj, title: remainder || null };
+      }
+    }
+  }
+  return null;
+}
+
+function parseDirectoryNotebook(files, notebookId, notebookName) {
+  // files: array of { name, text } objects (filename + file content)
+  // Returns entries in the same shape as parseNotebook()
+  const entries = [];
+
+  for (const file of files) {
+    const dateParsed = parseDateFromFilename(file.name);
+    if (!dateParsed) {
+      console.info(`Skipping "${file.name}" in directory notebook "${notebookName}" — no date in filename`);
+      continue;
+    }
+
+    let body = file.text.trim();
+    // If the file starts with a date heading matching our format, strip it
+    // (avoids duplicate date display since we already got the date from filename)
+    const firstLineMatch = body.match(/^#*\s*\d{2}-\d{2}-\d{4}\s*\n?/);
+    if (firstLineMatch) {
+      body = body.substring(firstLineMatch[0].length).trim();
+    }
+
+    // If there's a title from the filename and the body doesn't start with
+    // a heading, prepend it as an h2
+    if (dateParsed.title && body && !body.startsWith('#')) {
+      body = `## ${dateParsed.title}\n\n${body}`;
+    } else if (dateParsed.title && !body) {
+      body = `## ${dateParsed.title}`;
+    }
+
+    if (!body) continue;
+
+    const entry = {
+      date: dateParsed.dateStr,
+      dateObj: dateParsed.dateObj,
+      body: body,
+      html: parseMd(body),
+      preview: body.replace(/<span[^>]*data-tag="[^"]*">/g, '').replace(/<\/span>/g, '')
+                   .replace(/^#+\s*/gm, '').replace(/[-*] /g, '').substring(0, 300),
+      notebook: notebookId,
+      notebookName: notebookName,
+      // Track the source file for directory notebooks (needed for tag rewriting)
+      sourceFile: file.name,
+    };
+    entries.push(entry);
+
+    // Collect tags (same logic as parseNotebook)
+    function collectTags(src) {
+      const openRe = /<span\s+data-tag="([^"]+)">/g;
+      let m;
+      while ((m = openRe.exec(src)) !== null) {
+        const tName = m[1];
+        const innerStart = m.index + m[0].length;
+        let depth = 1, pos = innerStart;
+        while (depth > 0 && pos < src.length) {
+          const nextOpen = src.indexOf('<span', pos);
+          const nextClose = src.indexOf('</span>', pos);
+          if (nextClose === -1) break;
+          if (nextOpen !== -1 && nextOpen < nextClose) {
+            depth++;
+            pos = nextOpen + 5;
+          } else {
+            depth--;
+            if (depth === 0) {
+              const innerText = src.substring(innerStart, nextClose);
+              const plainInner = innerText.replace(/<span[^>]*data-tag="[^"]*">/g, '').replace(/<\/span>/g, '');
+              if (!allTags[tName]) allTags[tName] = [];
+              allTags[tName].push({
+                text: plainInner,
+                entry: entry,
+                notebookId: notebookId,
+                notebookName: notebookName,
+                date: dateParsed.dateStr,
+              });
+            }
+            pos = nextClose + 7;
+          }
+        }
+      }
+    }
+    collectTags(body);
+  }
+
+  return entries;
+}
+
+function formatDate(dateObj) {
+  return dateObj.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function formatShortDate(dateObj) {
+  return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getMonthYear(dateObj) {
+  return dateObj.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+// ============================================================
+// DATA LOADING
+// ============================================================
+
+async function loadNotebooks() {
+  // Step 1: Discover what .md files exist in entries/
+  await discoverNotebooks();
+
+  if (NOTEBOOKS.length === 0) {
+    allEntries = [];
+    notebookEntries = {};
+    allTags = {};
+    return;
+  }
+
+  // Step 2: Load content for each discovered notebook
+  const results = await Promise.allSettled(
+    NOTEBOOKS.map(async nb => {
+      // ── Directory-based notebook: load all files in the directory ──
+      if (nb.type === 'directory') {
+        return loadDirectoryNotebook(nb);
+      }
+
+      // ── Single-file notebook (existing behavior) ──
+
+      // Tauri: read file via Rust command
+      if (IS_TAURI && nb.absPath) {
+        try {
+          const text = await tauriInvoke('read_file', { path: nb.absPath });
+          return { notebook: nb, text, type: 'file' };
+        } catch (e) {
+          console.info(`Tauri read failed for "${nb.name}":`, e);
+        }
+      }
+
+      // Browser: File System Access API
+      if (dirHandle) {
+        try {
+          const pathParts = nb.file.split('/');
+          let current = dirHandle;
+          for (let i = 0; i < pathParts.length - 1; i++) {
+            current = await current.getDirectoryHandle(pathParts[i]);
+          }
+          const fileHandle = await current.getFileHandle(pathParts[pathParts.length - 1]);
+          const file = await fileHandle.getFile();
+          const text = await file.text();
+          return { notebook: nb, text, type: 'file' };
+        } catch (e) {
+          console.info(`File System read failed for "${nb.name}", trying fetch:`, e.message);
+        }
+      }
+
+      // Browser fallback: HTTP fetch
+      const resp = await fetch(nb.file);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${nb.file}`);
+      const text = await resp.text();
+      if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+        throw new Error('Got HTML instead of markdown');
+      }
+      return { notebook: nb, text, type: 'file' };
+    })
+  );
+
+  allEntries = [];
+  notebookEntries = {};
+  allTags = {};
+
+  results.forEach((result, i) => {
+    const nb = NOTEBOOKS[i];
+    if (result.status === 'fulfilled') {
+      const val = result.value;
+
+      if (val.type === 'directory') {
+        // Directory notebook: files already loaded, parse them
+        const entries = parseDirectoryNotebook(val.files, nb.id, nb.name);
+        notebookEntries[nb.id] = entries;
+        allEntries.push(...entries);
+        // Store per-file raw texts for tag rewriting
+        rawDirNotebookTexts[nb.id] = {};
+        for (const f of val.files) {
+          rawDirNotebookTexts[nb.id][f.name] = f.text;
+        }
+      } else {
+        // Single-file notebook: parse as before
+        const entries = parseNotebook(val.text, nb.id, nb.name);
+        notebookEntries[nb.id] = entries;
+        allEntries.push(...entries);
+      }
+    } else {
+      console.warn(`Could not load notebook "${nb.name}":`, result.reason);
+      notebookEntries[nb.id] = [];
+    }
+  });
+
+  // Sort all entries by date descending
+  allEntries.sort((a, b) => b.dateObj - a.dateObj);
+
+  // Sort each notebook's entries by date descending
+  Object.values(notebookEntries).forEach(entries => {
+    entries.sort((a, b) => b.dateObj - a.dateObj);
+  });
+}
+
+// Load all .md files from a directory-based notebook
+async function loadDirectoryNotebook(nb) {
+  const files = [];
+
+  if (IS_TAURI && nb.absDir) {
+    // Tauri: read each file via Rust command
+    for (const ef of nb.entryFiles) {
+      try {
+        const text = await tauriInvoke('read_file', { path: ef.absPath });
+        files.push({ name: ef.name, text });
+      } catch (e) {
+        console.info(`Failed to read ${ef.name} in dir notebook "${nb.name}":`, e);
+      }
+    }
+  } else if (dirHandle) {
+    // Browser: File System Access API
+    try {
+      const entriesDir = await dirHandle.getDirectoryHandle('entries');
+      const subDir = await entriesDir.getDirectoryHandle(nb.dirName || nb.file.replace('entries/', ''));
+      for (const ef of nb.entryFiles) {
+        try {
+          const fileHandle = await subDir.getFileHandle(ef.name);
+          const file = await fileHandle.getFile();
+          const text = await file.text();
+          files.push({ name: ef.name, text });
+        } catch (e) {
+          console.info(`Failed to read ${ef.name}:`, e);
+        }
+      }
+    } catch (e) {
+      console.info(`Dir notebook read failed for "${nb.name}":`, e);
+    }
+  }
+
+  return { notebook: nb, files, type: 'directory' };
+}
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+
+function renderNav() {
+  const container = document.getElementById('nav-notebooks');
+  container.innerHTML = NOTEBOOKS.map(nb => {
+    const count = (notebookEntries[nb.id] || []).length;
+    return `
+      <div class="nav-item" id="nav-notebook-${nb.id}" data-page="notebook-${nb.id}" onclick="navigate('notebook-${nb.id}')">
+        <span class="nav-icon">${nb.icon}</span>
+        <span class="nav-label">${nb.name}</span>
+        <span class="nav-badge">${count}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderHomeStats() {
+  const totalEntries = allEntries.length;
+  const totalNotebooks = NOTEBOOKS.length;
+  const latestDate = allEntries.length > 0 ? formatShortDate(allEntries[0].dateObj) : '—';
+
+  document.getElementById('home-stats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-value">${totalEntries}</div>
+      <div class="stat-label">Total entries</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${totalNotebooks}</div>
+      <div class="stat-label">Notebooks</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="font-size:16px;padding-top:6px;">${latestDate}</div>
+      <div class="stat-label">Latest entry</div>
+    </div>
+  `;
+}
+
+function renderTimeline() {
+  const container = document.getElementById('timeline-container');
+  const query = (document.getElementById('timeline-search').value || '').toLowerCase();
+
+  const filtered = query
+    ? allEntries.filter(e => e.body.toLowerCase().includes(query) || e.date.includes(query) || e.notebookName.toLowerCase().includes(query))
+    : allEntries;
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">&#128221;</div>
+        <div class="empty-state-text">${query ? 'No entries match your search.' : IS_TAURI && !rootFolder ? 'Click <strong>"Connect folder"</strong> in the sidebar to select your project folder.' : location.protocol === 'file:' ? 'This viewer needs a local server to read your notes.<br>Double-click <code>start.command</code> in the project folder, or run <code>python3 -m http.server 8000</code> and open <code>localhost:8000</code>.' : 'No entries yet.<br>Add <code>.md</code> files to <code>entries/</code> and reload.'}</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `<div class="library-grid">` + filtered.map((entry, i) => `
+    <div class="library-card" onclick="openEntry('${entry.notebook}', '${entry.date}')">
+      <div class="library-card-date">${formatShortDate(entry.dateObj)}</div>
+      <div class="library-card-preview">${escapeHtml(entry.preview)}</div>
+      <div class="library-card-source">${entry.notebookName}</div>
+    </div>
+  `).join('') + `</div>`;
+}
+
+function renderNotebookPages() {
+  const container = document.getElementById('notebook-pages-container');
+
+  container.innerHTML = NOTEBOOKS.map(nb => `
+    <div class="page" id="page-notebook-${nb.id}">
+      <div class="page-header">
+        <div class="page-title">${nb.name}</div>
+        <div class="page-tagline">${(notebookEntries[nb.id] || []).length} entries</div>
+      </div>
+
+      <div class="search-bar">
+        <span class="search-icon">&#128269;</span>
+        <input class="search-input" id="search-${nb.id}" type="text" placeholder="Search this notebook..." oninput="filterNotebook('${nb.id}')">
+      </div>
+
+      <div class="slideshow-layout">
+        <div class="thumb-panel" id="thumb-panel-${nb.id}"></div>
+        <div class="detail-panel" id="detail-panel-${nb.id}">
+          <div class="detail-panel-empty">
+            <div class="empty-icon">&#128196;</div>
+            Select an entry to view
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Render thumbnails and auto-select first entry for each notebook
+  NOTEBOOKS.forEach(nb => {
+    renderThumbnails(nb.id);
+    const entries = notebookEntries[nb.id] || [];
+    if (entries.length > 0) {
+      selectEntry(nb.id, 0);
+    }
+  });
+}
+
+function renderThumbnails(notebookId, filterText) {
+  const container = document.getElementById(`thumb-panel-${notebookId}`);
+  let entries = notebookEntries[notebookId] || [];
+
+  if (filterText) {
+    const q = filterText.toLowerCase();
+    entries = entries.filter(e => e.body.toLowerCase().includes(q) || e.date.includes(q));
+  }
+
+  if (entries.length === 0) {
+    container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">No entries found</div>`;
+    return;
+  }
+
+  let html = '';
+  let lastMonth = '';
+  const selected = selectedEntry[notebookId];
+
+  entries.forEach((entry, i) => {
+    const month = getMonthYear(entry.dateObj);
+    if (month !== lastMonth) {
+      html += `<div class="thumb-month-header">${month}</div>`;
+      lastMonth = month;
+    }
+
+    // Find original index in the full (unfiltered) array
+    const origIndex = (notebookEntries[notebookId] || []).indexOf(entry);
+
+    html += `
+      <div class="thumb-item ${origIndex === selected ? 'active' : ''}" onclick="selectEntry('${notebookId}', ${origIndex})" data-entry-index="${origIndex}">
+        <div class="thumb-date">${formatShortDate(entry.dateObj)}</div>
+        <div class="thumb-preview">${escapeHtml(entry.preview.substring(0, 80))}</div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function selectEntry(notebookId, index) {
+  selectedEntry[notebookId] = index;
+
+  // Update thumbnail active states
+  const thumbPanel = document.getElementById(`thumb-panel-${notebookId}`);
+  thumbPanel.querySelectorAll('.thumb-item').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.entryIndex) === index);
+  });
+
+  // Scroll active into view
+  const activeThumb = thumbPanel.querySelector('.thumb-item.active');
+  if (activeThumb) activeThumb.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+  renderDetailPanel(notebookId, index);
+}
+
+function renderDetailPanel(notebookId, index) {
+  const entries = notebookEntries[notebookId] || [];
+  const entry = entries[index];
+  if (!entry) return;
+
+  const panel = document.getElementById(`detail-panel-${notebookId}`);
+  const prevIdx = index > 0 ? index - 1 : null;
+  const nextIdx = index < entries.length - 1 ? index + 1 : null;
+
+  panel.innerHTML = `
+    <div class="entry-header">
+      <div>
+        <div class="entry-date">${entry.date}</div>
+        <div class="entry-day">${formatDate(entry.dateObj)}</div>
+      </div>
+      <div class="entry-nav-arrows">
+        <button class="entry-nav-btn" onclick="selectEntry('${notebookId}', ${prevIdx})" ${prevIdx === null ? 'disabled' : ''} title="Newer">&#9664;</button>
+        <button class="entry-nav-btn" onclick="selectEntry('${notebookId}', ${nextIdx})" ${nextIdx === null ? 'disabled' : ''} title="Older">&#9654;</button>
+      </div>
+    </div>
+    <div class="entry-content">${entry.html}</div>
+  `;
+
+  panel.scrollTop = 0;
+
+  // Update the floating inspector cards
+  updateInspector(notebookId, index);
+}
+
+// ============================================================
+// FLOATING INSPECTOR CARDS
+// ============================================================
+
+let _inspectorNotebookId = null;
+let _inspectorEntryIndex = null;
+
+function showInspectorCards() {
+  document.getElementById('inspector-cards').classList.remove('hidden');
+}
+function hideInspectorCards() {
+  document.getElementById('inspector-cards').classList.add('hidden');
+}
+
+function renderInspectorIcons(notebookId, currentIcon) {
+  // Only render if this notebook is currently shown in inspector
+  if (_inspectorNotebookId !== notebookId) return;
+  const container = document.getElementById('inspector-nb-icons');
+  if (!container) return;
+  container.innerHTML = NB_ICONS.map(icon => `
+    <button class="inspector-icon-btn ${icon === currentIcon ? 'active' : ''}"
+            onclick="updateNotebookIcon(this)" title="Set icon">
+      ${icon}
+    </button>
+  `).join('');
+}
+
+// ── Pencil-edit pattern ──
+function startEditField(fieldId) {
+  if (fieldId === 'nb-name') {
+    document.getElementById('inspector-nb-name-display').style.display = 'none';
+    const input = document.getElementById('inspector-nb-name-input');
+    const nb = NOTEBOOKS.find(n => n.id === _inspectorNotebookId);
+    if (nb) input.value = nb.name;
+    input.style.display = '';
+    input.focus();
+    input.select();
+  } else if (fieldId === 'entry-date') {
+    document.getElementById('inspector-entry-date-display').style.display = 'none';
+    const input = document.getElementById('inspector-entry-date-input');
+    const entries = notebookEntries[_inspectorNotebookId] || [];
+    const entry = entries[_inspectorEntryIndex];
+    if (entry) input.value = entry.date;
+    input.style.display = '';
+    input.focus();
+    input.select();
+  }
+}
+function commitEditField(fieldId) {
+  if (fieldId === 'nb-name') {
+    const input = document.getElementById('inspector-nb-name-input');
+    input.style.display = 'none';
+    document.getElementById('inspector-nb-name-display').style.display = '';
+    updateNotebookName(input.value);
+  } else if (fieldId === 'entry-date') {
+    const input = document.getElementById('inspector-entry-date-input');
+    input.style.display = 'none';
+    document.getElementById('inspector-entry-date-display').style.display = '';
+    updateEntryDate(input.value);
+  }
+}
+function cancelEditField(fieldId) {
+  if (fieldId === 'nb-name') {
+    document.getElementById('inspector-nb-name-input').style.display = 'none';
+    document.getElementById('inspector-nb-name-display').style.display = '';
+  } else if (fieldId === 'entry-date') {
+    document.getElementById('inspector-entry-date-input').style.display = 'none';
+    document.getElementById('inspector-entry-date-display').style.display = '';
+  }
+}
+
+function updateNotebookName(newName) {
+  const nb = NOTEBOOKS.find(n => n.id === _inspectorNotebookId);
+  if (!nb || !newName.trim()) return;
+  nb.name = newName.trim();
+
+  // Update display
+  const valEl = document.getElementById('inspector-nb-name-val');
+  if (valEl) valEl.textContent = nb.name;
+
+  // Update sidebar nav label
+  const navLabel = document.querySelector(`#nav-notebook-${_inspectorNotebookId} .nav-label`);
+  if (navLabel) navLabel.textContent = nb.name;
+
+  // Update page header
+  const pageTitle = document.querySelector(`#page-notebook-${_inspectorNotebookId} .page-title`);
+  if (pageTitle) pageTitle.textContent = nb.name;
+}
+
+function updateNotebookIcon(btnEl) {
+  const nb = NOTEBOOKS.find(n => n.id === _inspectorNotebookId);
+  if (!nb) return;
+  const newIcon = btnEl.innerHTML.trim();
+  nb.icon = newIcon;
+
+  // Update sidebar nav icon
+  const navIcon = document.querySelector(`#nav-notebook-${_inspectorNotebookId} .nav-icon`);
+  if (navIcon) navIcon.innerHTML = newIcon;
+
+  // Update icon picker active state
+  const picker = document.getElementById('inspector-nb-icons');
+  if (picker) {
+    picker.querySelectorAll('.inspector-icon-btn').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+  }
+}
+
+function updateInspector(notebookId, entryIndex) {
+  _inspectorNotebookId = notebookId;
+  _inspectorEntryIndex = entryIndex;
+
+  const nb = NOTEBOOKS.find(n => n.id === notebookId);
+  const entries = notebookEntries[notebookId] || [];
+  const entry = entries[entryIndex];
+  if (!nb || !entry) return;
+
+  showInspectorCards();
+
+  // ── Notebook card ──
+  const nameVal = document.getElementById('inspector-nb-name-val');
+  if (nameVal) nameVal.textContent = nb.name;
+  // Reset edit state
+  document.getElementById('inspector-nb-name-input').style.display = 'none';
+  document.getElementById('inspector-nb-name-display').style.display = '';
+  renderInspectorIcons(notebookId, nb.icon);
+
+  // ── Entry card ──
+  const entryFields = document.getElementById('inspector-entry-fields');
+  if (entryFields) {
+    const firstLine = entry.body.split('\n').find(l => l.trim()) || '';
+    const title = firstLine.replace(/^#+\s*/, '').replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '').substring(0, 120);
+
+    entryFields.innerHTML = `
+      <div class="inspector-field">
+        <label class="inspector-label">Date</label>
+        <div class="inspector-editable" id="inspector-entry-date-display">
+          <span class="inspector-editable-value">${entry.date}</span>
+          <button class="inspector-edit-btn" onclick="startEditField('entry-date')" title="Edit date">&#9998;</button>
+        </div>
+        <input class="inspector-input" id="inspector-entry-date-input" style="display:none" onblur="commitEditField('entry-date')" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelEditField('entry-date')">
+      </div>
+      <div class="inspector-field">
+        <label class="inspector-label">First line</label>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.4;word-break:break-word;">${escapeHtml(title) || '<em style=color:var(--text-tertiary)>Empty entry</em>'}</div>
+      </div>
+    `;
+  }
+
+  // ── Tags card ──
+  const tagsList = document.getElementById('inspector-tags');
+  if (tagsList) {
+    const tagCounts = {};
+    const tagRe = /<span\s+data-tag="([^"]+)">/g;
+    let m;
+    while ((m = tagRe.exec(entry.body)) !== null) {
+      tagCounts[m[1]] = (tagCounts[m[1]] || 0) + 1;
+    }
+
+    const tagNames = Object.keys(tagCounts).sort();
+    if (tagNames.length === 0) {
+      tagsList.innerHTML = '<div class="inspector-tag-empty">No tags in this entry</div>';
+    } else {
+      // Reset jump counters
+      Object.keys(_jumpCounters).forEach(k => delete _jumpCounters[k]);
+
+      tagsList.innerHTML = tagNames.map(tName => {
+        const safeName = tName.replace(/'/g, "\\'");
+        const count = tagCounts[tName];
+        const displayName = escapeHtml(tName.replace(/-/g, ' '));
+        return `
+          <div class="inspector-tag-item"
+               onclick="jumpToTag('${safeName}', 0)"
+               onmouseenter="highlightAllTags('${safeName}')"
+               onmouseleave="unhighlightAllTags('${safeName}')">
+            <span class="inspector-tag-dot"></span>
+            <span class="inspector-tag-name">${displayName}</span>
+            ${count > 1 ? `
+              <div class="inspector-tag-nav">
+                <button class="inspector-tag-nav-btn" onclick="event.stopPropagation();jumpToTag('${safeName}', -1)" title="Previous">&#9664;</button>
+                <span class="inspector-tag-pos" id="tag-pos-${tName}">1/${count}</span>
+                <button class="inspector-tag-nav-btn" onclick="event.stopPropagation();jumpToTag('${safeName}', 1)" title="Next">&#9654;</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+  }
+}
+
+function updateEntryDate(newDate) {
+  if (!/^\d{1,2}-\d{1,2}-\d{4}$/.test(newDate)) return;
+  const entries = notebookEntries[_inspectorNotebookId] || [];
+  const entry = entries[_inspectorEntryIndex];
+  if (!entry) return;
+
+  const oldDate = entry.date;
+  entry.date = newDate;
+  entry.dateObj = parseDateStr(newDate);
+
+  // Update detail panel header
+  const panel = document.getElementById(`detail-panel-${_inspectorNotebookId}`);
+  if (panel) {
+    const dateEl = panel.querySelector('.entry-date');
+    const dayEl = panel.querySelector('.entry-day');
+    if (dateEl) dateEl.textContent = newDate;
+    if (dayEl) dayEl.textContent = formatDate(entry.dateObj);
+  }
+
+  // Update the inspector display text
+  const displayVal = document.querySelector('#inspector-entry-date-display .inspector-editable-value');
+  if (displayVal) displayVal.textContent = newDate;
+
+  renderThumbnails(_inspectorNotebookId);
+
+  // Rewrite file if applicable
+  const nb = NOTEBOOKS.find(n => n.id === _inspectorNotebookId);
+  if (nb && nb.type === 'file' && rawNotebookTexts[_inspectorNotebookId]) {
+    rawNotebookTexts[_inspectorNotebookId] = rawNotebookTexts[_inspectorNotebookId].replace(
+      new RegExp(`^# ${oldDate.replace(/[-]/g, '\\-')}$`, 'm'),
+      `# ${newDate}`
+    );
+    if (IS_TAURI && nb.absPath) {
+      tauriInvoke('write_file', { path: nb.absPath, contents: rawNotebookTexts[_inspectorNotebookId] });
+    }
+  }
+}
+
+// ── Tag highlighting (hover) and navigation (arrows) ──
+
+const _jumpCounters = {};
+let _activeJumpTarget = null;   // the element currently wearing the "current" outline
+
+function _clearActiveJump() {
+  if (_activeJumpTarget) {
+    _activeJumpTarget.classList.remove('tag-jump-current');
+    _activeJumpTarget = null;
+  }
+}
+
+function highlightAllTags(tagName) {
+  const panel = document.getElementById(`detail-panel-${_inspectorNotebookId}`);
+  if (!panel) return;
+  panel.querySelectorAll(`[data-tag="${tagName}"]`).forEach(el => el.classList.add('tag-flash'));
+}
+
+function unhighlightAllTags(tagName) {
+  const panel = document.getElementById(`detail-panel-${_inspectorNotebookId}`);
+  if (!panel) return;
+  _clearActiveJump();
+  panel.querySelectorAll(`[data-tag="${tagName}"]`).forEach(el => el.classList.remove('tag-flash'));
+}
+
+function jumpToTag(tagName, direction) {
+  const panel = document.getElementById(`detail-panel-${_inspectorNotebookId}`);
+  if (!panel) return;
+
+  const tagged = panel.querySelectorAll(`[data-tag="${tagName}"]`);
+  if (tagged.length === 0) return;
+
+  // Clear previous "current" marker
+  _clearActiveJump();
+
+  // Advance counter
+  if (_jumpCounters[tagName] === undefined) _jumpCounters[tagName] = 0;
+
+  if (direction === 1) {
+    _jumpCounters[tagName] = (_jumpCounters[tagName] + 1) % tagged.length;
+  } else if (direction === -1) {
+    _jumpCounters[tagName] = (_jumpCounters[tagName] - 1 + tagged.length) % tagged.length;
+  }
+
+  const idx = _jumpCounters[tagName];
+  const target = tagged[idx];
+
+  // Scroll to target
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Mark the specific occurrence with a stronger outline
+  target.classList.add('tag-jump-current');
+  _activeJumpTarget = target;
+
+  // Update position indicator
+  const posEl = document.getElementById(`tag-pos-${tagName}`);
+  if (posEl) posEl.textContent = `${idx + 1}/${tagged.length}`;
+}
+
+// ============================================================
+// INTERACTIONS
+// ============================================================
+
+function openEntry(notebookId, date) {
+  navigate(`notebook-${notebookId}`);
+  const entries = notebookEntries[notebookId] || [];
+  const index = entries.findIndex(e => e.date === date);
+  if (index !== -1) selectEntry(notebookId, index);
+}
+
+function filterNotebook(notebookId) {
+  const query = document.getElementById(`search-${notebookId}`).value;
+  renderThumbnails(notebookId, query);
+}
+
+// Stores scroll positions per page: { pageId: { window, panels: { elementId: scrollTop } } }
+const scrollMemory = {};
+
+function saveScrollState(pageId) {
+  const pageEl = document.getElementById(`page-${pageId}`);
+  if (!pageEl) return;
+  const state = { window: window.scrollY, panels: {} };
+  pageEl.querySelectorAll('.thumb-panel, .detail-panel').forEach(el => {
+    if (el.id) state.panels[el.id] = el.scrollTop;
+  });
+  scrollMemory[pageId] = state;
+}
+
+function restoreScrollState(pageId) {
+  const state = scrollMemory[pageId];
+  if (!state) return;
+  // Restore inner panels immediately
+  Object.entries(state.panels).forEach(([id, top]) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollTop = top;
+  });
+  // Restore window scroll after the page is visible
+  window.scrollTo(0, state.window);
+}
+
+function navigate(page) {
+  // Save scroll state of the page we're leaving (but not when re-activating
+  // the same page after a DOM rebuild — the pre-rebuild save is already stored)
+  if (currentPage && currentPage !== page) saveScrollState(currentPage);
+
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const pageEl = document.getElementById(`page-${page}`);
+  if (pageEl) pageEl.classList.add('active');
+
+  const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if (navEl) navEl.classList.add('active');
+
+  document.getElementById('sidebar').classList.remove('open');
+
+  // Show/hide inspector cards based on whether we're on a notebook page
+  if (page.startsWith('notebook-')) {
+    showInspectorCards();
+  } else {
+    hideInspectorCards();
+  }
+
+  // Restore scroll state of the page we're arriving at
+  restoreScrollState(page);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+// ============================================================
+// THEME
+// ============================================================
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('theme-icon').innerHTML = isDark ? '&#9790;' : '&#9788;';
+  document.getElementById('theme-label').textContent = isDark ? 'Dark mode' : 'Light mode';
+  try { localStorage.setItem('theme', isDark ? 'light' : 'dark'); } catch(e) {}
+}
+
+(function() {
+  try {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('theme-icon').innerHTML = '&#9788;';
+      document.getElementById('theme-label').textContent = 'Light mode';
+    }
+  } catch(e) {}
+})();
+
+// ============================================================
+// TAGS PAGE
+// ============================================================
+
+let tagSortField = 'date';   // 'date' | 'source' | 'text'
+let tagSortAsc   = false;    // newest first by default
+
+function renderTagsPage() {
+  const tagNames = Object.keys(allTags).sort();
+  const count = tagNames.length;
+  document.getElementById('nav-tag-count').textContent = count;
+
+  const breadcrumb = document.getElementById('tags-breadcrumb');
+  const container  = document.getElementById('tags-view-container');
+
+  if (count === 0) {
+    breadcrumb.innerHTML = '';
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">&#9873;</div>
+        <div class="empty-state-text">No tags yet. Select text in any entry and click the tag button to create one.</div>
+      </div>`;
+    return;
+  }
+
+  if (activeTagFilter) {
+    renderTagDetail(activeTagFilter);
+  } else {
+    renderTagFolders();
+  }
+}
+
+/* ── Root view: tag folders ── */
+function renderTagFolders() {
+  const breadcrumb = document.getElementById('tags-breadcrumb');
+  const container  = document.getElementById('tags-view-container');
+  const tagNames   = Object.keys(allTags).sort();
+  const totalItems = Object.values(allTags).reduce((s,a) => s + a.length, 0);
+
+  breadcrumb.style.display = '';
+  breadcrumb.innerHTML = `<span class="bc-current">Tags</span><span style="margin-left:auto;font-size:11px;">${tagNames.length} tags &middot; ${totalItems} items</span>`;
+
+  container.innerHTML = '<div class="tags-folder-grid">' +
+    tagNames.map(t => `
+      <div class="tag-folder" onclick="filterTags('${t}')" title="${allTags[t].length} item${allTags[t].length !== 1 ? 's' : ''}">
+        <div class="tag-folder-name">${t}</div>
+        <div class="tag-folder-count">${allTags[t].length} item${allTags[t].length !== 1 ? 's' : ''}</div>
+      </div>`
+    ).join('') + '</div>';
+}
+
+/* ── Detail view: items inside a tag, sorted by date ── */
+function renderTagDetail(tagName) {
+  const breadcrumb = document.getElementById('tags-breadcrumb');
+  const container  = document.getElementById('tags-view-container');
+  const items      = allTags[tagName] || [];
+
+  // Hide breadcrumb in detail view — the inline header handles navigation
+  breadcrumb.style.display = 'none';
+
+  if (items.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-text">No items with this tag.</div></div>';
+    return;
+  }
+
+  // Sort items
+  const sorted = [...items].sort((a, b) => {
+    let cmp = 0;
+    if (tagSortField === 'date') {
+      // Parse MM-DD-YYYY to comparable values
+      const da = tagDateToTimestamp(a.date), db = tagDateToTimestamp(b.date);
+      cmp = da - db;
+    } else if (tagSortField === 'source') {
+      cmp = (a.notebookName || '').localeCompare(b.notebookName || '');
+    } else {
+      const ta = a.text.replace(/\*\*/g, '').replace(/\*/g, '');
+      const tb = b.text.replace(/\*\*/g, '').replace(/\*/g, '');
+      cmp = ta.localeCompare(tb);
+    }
+    return tagSortAsc ? cmp : -cmp;
+  });
+
+  // Single header row: back arrow | tag name | count | actions
+  let html = `<div class="tag-detail-header">`;
+  html += `<button class="tag-detail-back" onclick="filterTags(null)" title="All tags">&larr;</button>`;
+  html += `<span class="tag-detail-title">${tagName}</span>`;
+  html += `<span class="tag-detail-count">${items.length} item${items.length !== 1 ? 's' : ''}</span>`;
+  html += `<div class="tag-detail-actions-inline">`;
+
+  if (tagRemoveMode) {
+    const selCount = tagRemoveSelected.size;
+    html += `<div class="tag-confirm-bar">
+      <span class="tag-confirm-count">${selCount}</span> selected
+      <button class="tag-confirm-cancel" onclick="exitTagRemoveMode()">Cancel</button>
+      <button class="tag-confirm-delete" onclick="confirmTagRemoval()" ${selCount === 0 ? 'disabled style="opacity:0.5;cursor:default"' : ''}>Remove</button>
+    </div>`;
+  } else {
+    html += `<button class="tag-remove-btn" onclick="enterTagRemoveMode()">Remove tags</button>`;
+  }
+
+  html += `</div></div>`;
+
+  html += '<div class="tags-folder-grid">';
+  sorted.forEach((item, i) => {
+    const plainText = item.text.replace(/\*\*/g, '').replace(/\*/g, '');
+    const sourceName = escapeHtml(item.notebookName || item.notebookId);
+    const isSelected = tagRemoveSelected.has(i);
+    if (tagRemoveMode) {
+      html += `
+        <div class="tag-item-card selectable ${isSelected ? 'selected' : ''}" onclick="toggleTagRemoveCard(${i})">
+          <div class="tag-card-check">${isSelected ? '&#10003;' : ''}</div>
+          <div class="tag-item-card-text">${escapeHtml(plainText)}</div>
+          <div class="tag-item-card-meta">${sourceName} &middot; <span class="card-date">${item.date}</span></div>
+        </div>`;
+    } else {
+      html += `
+        <div class="tag-item-card">
+          <button class="tag-item-card-go" onclick="openEntry('${item.notebookId}', '${item.date}')" title="Open in notebook">&nearr;</button>
+          <div class="tag-item-card-text">${escapeHtml(plainText)}</div>
+          <div class="tag-item-card-meta">${sourceName} &middot; <span class="card-date">${item.date}</span></div>
+        </div>`;
+    }
+  });
+  html += '</div>';
+
+  container.innerHTML = html;
+}
+
+function tagDateToTimestamp(d) {
+  if (!d) return 0;
+  const parts = d.split('-');
+  if (parts.length === 3) return new Date(parts[2], parts[0] - 1, parts[1]).getTime();
+  return 0;
+}
+
+function setTagSort(field) {
+  if (tagSortField === field) { tagSortAsc = !tagSortAsc; }
+  else { tagSortField = field; tagSortAsc = field === 'date' ? false : true; }
+  renderTagsPage();
+}
+
+function filterTags(tagName) {
+  activeTagFilter = tagName;
+  tagRemoveMode = false;
+  tagRemoveSelected.clear();
+  // Reset sort to date-descending when entering a new folder
+  if (tagName) { tagSortField = 'date'; tagSortAsc = false; }
+  renderTagsPage();
+}
+
+/* ── Tag removal mode ── */
+let tagRemoveMode = false;
+const tagRemoveSelected = new Set(); // indices into the sorted items array
+
+function enterTagRemoveMode() {
+  tagRemoveMode = true;
+  tagRemoveSelected.clear();
+  renderTagDetail(activeTagFilter);
+}
+
+function exitTagRemoveMode() {
+  tagRemoveMode = false;
+  tagRemoveSelected.clear();
+  renderTagDetail(activeTagFilter);
+}
+
+function toggleTagRemoveCard(index) {
+  if (tagRemoveSelected.has(index)) tagRemoveSelected.delete(index);
+  else tagRemoveSelected.add(index);
+  renderTagDetail(activeTagFilter);
+}
+
+async function confirmTagRemoval() {
+  if (tagRemoveSelected.size === 0) return;
+  const tagName = activeTagFilter;
+  const items = allTags[tagName] || [];
+
+  // Sort items the same way renderTagDetail does so indices match
+  const sorted = [...items].sort((a, b) => {
+    let cmp = 0;
+    if (tagSortField === 'date') {
+      const da = tagDateToTimestamp(a.date), db = tagDateToTimestamp(b.date);
+      cmp = da - db;
+    } else if (tagSortField === 'source') {
+      cmp = (a.notebookName || '').localeCompare(b.notebookName || '');
+    } else {
+      const ta = a.text.replace(/\*\*/g, '').replace(/\*/g, '');
+      const tb = b.text.replace(/\*\*/g, '').replace(/\*/g, '');
+      cmp = ta.localeCompare(tb);
+    }
+    return tagSortAsc ? cmp : -cmp;
+  });
+
+  // Group items to remove by notebook so we can batch writes
+  const byNotebook = {};
+  for (const idx of tagRemoveSelected) {
+    const item = sorted[idx];
+    if (!item) continue;
+    if (!byNotebook[item.notebookId]) byNotebook[item.notebookId] = [];
+    byNotebook[item.notebookId].push(item);
+  }
+
+  // For each affected notebook, strip the tag spans from the raw text
+  for (const [nbId, toRemove] of Object.entries(byNotebook)) {
+    const nb = NOTEBOOKS.find(n => n.id === nbId);
+
+    if (nb && nb.type === 'directory') {
+      // Directory notebook: group removals by source file
+      const byFile = {};
+      for (const item of toRemove) {
+        const sf = item.entry?.sourceFile;
+        if (!sf) continue;
+        if (!byFile[sf]) byFile[sf] = [];
+        byFile[sf].push(item);
+      }
+      for (const [fileName, fileItems] of Object.entries(byFile)) {
+        let raw = rawDirNotebookTexts[nbId]?.[fileName];
+        if (!raw) continue;
+        for (const item of fileItems) {
+          raw = removeTagSpan(raw, tagName, item.text);
+        }
+        rawDirNotebookTexts[nbId][fileName] = raw;
+        await writeNotebookFile(nbId, raw, fileName);
+      }
+    } else {
+      // Single-file notebook: existing behavior
+      let raw = rawNotebookTexts[nbId];
+      if (!raw) continue;
+      for (const item of toRemove) {
+        raw = removeTagSpan(raw, tagName, item.text);
+      }
+      rawNotebookTexts[nbId] = raw;
+      await writeNotebookFile(nbId, raw);
+    }
+  }
+
+  // Re-parse all notebooks to rebuild state
+  allTags = {};
+  allEntries = [];
+  for (const nb of NOTEBOOKS) {
+    if (nb.type === 'directory') {
+      const dirTexts = rawDirNotebookTexts[nb.id];
+      if (dirTexts) {
+        const files = Object.entries(dirTexts).map(([name, text]) => ({ name, text }));
+        const entries = parseDirectoryNotebook(files, nb.id, nb.name);
+        notebookEntries[nb.id] = entries;
+      }
+    } else {
+      const text = rawNotebookTexts[nb.id];
+      if (text) {
+        const entries = parseNotebook(text, nb.id, nb.name);
+        notebookEntries[nb.id] = entries;
+      }
+    }
+  }
+  allEntries = [];
+  for (const nb of NOTEBOOKS) {
+    allEntries.push(...(notebookEntries[nb.id] || []));
+  }
+  allEntries.sort((a, b) => b.dateObj - a.dateObj);
+
+  const removedCount = tagRemoveSelected.size;
+  tagRemoveMode = false;
+  tagRemoveSelected.clear();
+
+  // If all items for this tag were removed, go back to tag list
+  if (!allTags[tagName] || allTags[tagName].length === 0) {
+    activeTagFilter = null;
+  }
+
+  // Save scroll state before DOM rebuild
+  if (currentPage) saveScrollState(currentPage);
+
+  renderTimeline();
+  renderNotebookPages();
+  renderTagsPage();
+  renderHomeStats();
+
+  if (currentPage) navigate(currentPage);
+  showToast(`Removed ${removedCount} tag${removedCount !== 1 ? 's' : ''}`);
+}
+
+/**
+ * Remove one occurrence of <span data-tag="tagName">innerText</span> from raw
+ * text, replacing it with just the inner content (unwrapping the span).
+ * Uses plainText to disambiguate when the same tag name appears multiple times.
+ */
+function removeTagSpan(fullText, tagName, plainText) {
+  const openTag = `<span data-tag="${tagName}">`;
+  let searchPos = 0;
+
+  while (searchPos < fullText.length) {
+    const idx = fullText.indexOf(openTag, searchPos);
+    if (idx === -1) break;
+
+    const innerStart = idx + openTag.length;
+    // Find matching </span> accounting for nesting
+    let depth = 1, pos = innerStart;
+    while (depth > 0 && pos < fullText.length) {
+      const nextOpen = fullText.indexOf('<span', pos);
+      const nextClose = fullText.indexOf('</span>', pos);
+      if (nextClose === -1) break;
+      if (nextOpen !== -1 && nextOpen < nextClose) {
+        depth++;
+        pos = nextOpen + 5;
+      } else {
+        depth--;
+        if (depth === 0) {
+          const innerContent = fullText.substring(innerStart, nextClose);
+          // Check if this span's plain text matches the one we want to remove
+          const plain = innerContent.replace(/<span[^>]*data-tag="[^"]*">/g, '').replace(/<\/span>/g, '');
+          if (plain === plainText) {
+            const spanEnd = nextClose + 7; // '</span>'.length
+            return fullText.substring(0, idx) + innerContent + fullText.substring(spanEnd);
+          }
+        }
+        pos = nextClose + 7;
+      }
+    }
+    searchPos = idx + openTag.length;
+  }
+
+  return fullText;
+}
+
+// ============================================================
+// SELECTION TOOLBAR — appears when user highlights text in entries
+// ============================================================
+
+function setupSelectionToolbar() {
+  document.addEventListener('mouseup', (e) => {
+    const toolbar = document.getElementById('selection-toolbar');
+    const modalOverlay = document.getElementById('tag-modal-overlay');
+
+    // Don't interfere if the click was on the toolbar or modal
+    if (toolbar.contains(e.target) || modalOverlay.contains(e.target)) return;
+
+    const sel = window.getSelection();
+    const text = sel.toString().trim();
+
+    if (!text || text.length < 2) {
+      toolbar.classList.remove('visible');
+      pendingSelection = null;
+      return;
+    }
+
+    // Only show toolbar when selection is inside .entry-content
+    const anchorNode = sel.anchorNode;
+    const entryContent = anchorNode ? anchorNode.parentElement?.closest('.entry-content') : null;
+    if (!entryContent) {
+      toolbar.classList.remove('visible');
+      pendingSelection = null;
+      return;
+    }
+
+    // Find which notebook/entry this belongs to
+    const detailPanel = entryContent.closest('[id^="detail-panel-"]');
+    if (!detailPanel) return;
+    const notebookId = detailPanel.id.replace('detail-panel-', '');
+    const entryIdx = selectedEntry[notebookId];
+    const entry = (notebookEntries[notebookId] || [])[entryIdx];
+    if (!entry) return;
+
+    // Store selection context
+    pendingSelection = {
+      text: text,
+      notebookId: notebookId,
+      entryIdx: entryIdx,
+      entry: entry,
+    };
+
+    // Position toolbar near selection
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    toolbar.style.left = Math.min(rect.left + rect.width / 2 - 60, window.innerWidth - 160) + 'px';
+    toolbar.style.top = (rect.top - 44) + 'px';
+    toolbar.classList.add('visible');
+  });
+
+  // Hide toolbar on click elsewhere
+  document.addEventListener('mousedown', (e) => {
+    const toolbar = document.getElementById('selection-toolbar');
+    if (!toolbar.contains(e.target) && !document.getElementById('tag-modal-overlay').contains(e.target)) {
+      toolbar.classList.remove('visible');
+    }
+  });
+}
+
+// ============================================================
+// TAG MODAL
+// ============================================================
+
+function openTagModal() {
+  if (!pendingSelection) return;
+
+  const overlay = document.getElementById('tag-modal-overlay');
+  const preview = document.getElementById('tag-modal-preview');
+  const input = document.getElementById('tag-name-input');
+  const existing = document.getElementById('tag-modal-existing');
+
+  // Preview the selected text
+  const displayText = pendingSelection.text.length > 200
+    ? pendingSelection.text.substring(0, 200) + '...'
+    : pendingSelection.text;
+  preview.textContent = `"${displayText}"`;
+
+  // Show existing tags for quick selection
+  const tagNames = Object.keys(allTags).sort();
+  existing.innerHTML = tagNames.length > 0
+    ? tagNames.map(t => `<div class="tag-pill" onclick="selectExistingTag('${t}')">${t}</div>`).join('')
+    : '<span style="font-size:12px;color:var(--text-tertiary);">No existing tags yet</span>';
+
+  input.value = '';
+  document.getElementById('tag-apply-btn').disabled = true;
+
+  overlay.classList.add('visible');
+  document.getElementById('selection-toolbar').classList.remove('visible');
+
+  setTimeout(() => input.focus(), 100);
+}
+
+function closeTagModal() {
+  document.getElementById('tag-modal-overlay').classList.remove('visible');
+  pendingSelection = null;
+}
+
+function selectExistingTag(name) {
+  const input = document.getElementById('tag-name-input');
+  input.value = name;
+  validateTagInput();
+}
+
+function validateTagInput() {
+  const val = document.getElementById('tag-name-input').value.trim();
+  document.getElementById('tag-apply-btn').disabled = !val;
+}
+
+// ============================================================
+// APPLY TAG — Writes to markdown file
+// ============================================================
+
+async function applyTag() {
+  const tagName = document.getElementById('tag-name-input').value.trim().toLowerCase().replace(/\s+/g, '-');
+  if (!tagName || !pendingSelection) return;
+
+  const { text, notebookId, entry } = pendingSelection;
+
+  // Find this text in the entry's raw body and wrap it
+  const rawBody = entry.body;
+
+  // The browser's selection toString() collapses whitespace/newlines,
+  // so we do a flexible match against the raw markdown to find the
+  // original text (which may contain \n, extra spaces, etc.).
+  function flexIndexOf(raw, selected) {
+    // First try exact match
+    const exact = raw.indexOf(selected);
+    if (exact !== -1) return { index: exact, length: selected.length };
+
+    // Build a regex that treats any whitespace run in the selected text
+    // as matching any whitespace run (including newlines) in the raw text
+    const escaped = selected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const flexPattern = escaped.replace(/\s+/g, '\\s+');
+    const re = new RegExp(flexPattern);
+    const m = raw.match(re);
+    if (m) return { index: m.index, length: m[0].length };
+    return null;
+  }
+
+  const found = flexIndexOf(rawBody, text);
+  if (!found) {
+    showToast('Could not locate the exact text in the source — try a shorter selection.');
+    closeTagModal();
+    return;
+  }
+
+  // Use the original raw text (preserving line breaks) for the tag
+  const originalText = rawBody.substring(found.index, found.index + found.length);
+  const taggedText = `<span data-tag="${tagName}">${originalText}</span>`;
+
+  // If no folder connected yet, prompt the user now
+  const needsConnection = IS_TAURI ? !rootFolder : (!dirHandle && hasFileSystemAccess);
+  if (needsConnection) {
+    const connected = await connectFolder();
+    if (!connected) {
+      // User cancelled — still apply in-memory and offer download
+    }
+  }
+
+  // Replace in raw body
+  const newBody = rawBody.substring(0, found.index) + taggedText + rawBody.substring(found.index + found.length);
+
+  const nb = NOTEBOOKS.find(n => n.id === notebookId);
+  let result;
+
+  if (nb && nb.type === 'directory' && entry.sourceFile) {
+    // Directory notebook: update the specific file's raw text
+    const fileRaw = rawDirNotebookTexts[notebookId]?.[entry.sourceFile];
+    if (fileRaw) {
+      const newFileText = fileRaw.replace(rawBody, newBody);
+      rawDirNotebookTexts[notebookId][entry.sourceFile] = newFileText;
+      result = await writeNotebookFile(notebookId, newFileText, entry.sourceFile);
+    }
+  } else {
+    // Single-file notebook: rebuild the full notebook text
+    const fullText = rawNotebookTexts[notebookId];
+    const newFullText = fullText.replace(rawBody, newBody);
+    rawNotebookTexts[notebookId] = newFullText;
+    result = await writeNotebookFile(notebookId, newFullText);
+  }
+
+  // Always update in-memory state so the UI reflects the tag
+  allTags = {};
+  allEntries = [];
+  // Re-parse ALL notebooks so tags from other notebooks are preserved
+  for (const nb2 of NOTEBOOKS) {
+    if (nb2.type === 'directory') {
+      const dirTexts = rawDirNotebookTexts[nb2.id];
+      if (dirTexts) {
+        const files = Object.entries(dirTexts).map(([name, text]) => ({ name, text }));
+        const entries = parseDirectoryNotebook(files, nb2.id, nb2.name);
+        notebookEntries[nb2.id] = entries;
+      }
+    } else {
+      const text = rawNotebookTexts[nb2.id];
+      if (text) {
+        const entries = parseNotebook(text, nb2.id, nb2.name);
+        notebookEntries[nb2.id] = entries;
+      }
+    }
+  }
+  allEntries = [];
+  for (const nb2 of NOTEBOOKS) {
+    allEntries.push(...(notebookEntries[nb2.id] || []));
+  }
+  allEntries.sort((a, b) => b.dateObj - a.dateObj);
+
+  // Save scroll state before DOM rebuild
+  if (currentPage) saveScrollState(currentPage);
+
+  // Re-render
+  renderTimeline();
+  renderNotebookPages();
+  renderTagsPage();
+  renderHomeStats();
+
+  // Restore the active page — renderNotebookPages() rebuilds the DOM
+  // which strips the 'active' class, causing a white screen without this.
+  if (currentPage) navigate(currentPage);
+
+  if (result === true) {
+    showToast(`Tagged as "${tagName}" — saved to file`);
+  } else if (result === 'downloaded') {
+    showToast(`Tagged as "${tagName}" — file downloaded (replace your .md file to persist)`);
+  } else {
+    showToast(`Tagged as "${tagName}" — in memory only this session`);
+  }
+
+  closeTagModal();
+}
+
+// ============================================================
+// FOLDER CONNECTION & FILE WRITING
+// ============================================================
+
+// Browser: File System Access API support
+const hasFileSystemAccess = ('showDirectoryPicker' in window);
+
+async function connectFolder() {
+  // ── Tauri: native OS folder picker, persisted forever ──
+  if (IS_TAURI) {
+    try {
+      const selected = await tauriPickFolder();
+      if (!selected) {
+        showToast('Folder selection cancelled.');
+        return false;
+      }
+      // Validate it has an entries/ subfolder
+      const valid = await tauriInvoke('validate_folder', { path: selected });
+      if (!valid) {
+        showToast('That folder doesn\'t contain an entries/ directory. Select the project root folder.');
+        return false;
+      }
+      // Save and connect
+      rootFolder = selected;
+      await tauriInvoke('set_saved_folder', { path: selected });
+      updateFolderStatus(true);
+      showToast('Folder connected — scanning entries/ for notebooks...');
+      await reload();
+      return true;
+    } catch (e) {
+      console.warn('Tauri folder picker failed:', e);
+      showToast('Could not connect folder: ' + e);
+      return false;
+    }
+  }
+
+  // ── Browser: File System Access API ──
+  if (!hasFileSystemAccess) {
+    const isFile = location.protocol === 'file:';
+    const msg = isFile
+      ? 'Open via localhost to enable file saving (see Settings). Tags will download as files for now.'
+      : 'Your browser does not support folder access. Tags will be saved via download.';
+    showToast(msg);
+    return false;
+  }
+  try {
+    dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    try {
+      await dirHandle.getDirectoryHandle('entries');
+    } catch (e) {
+      showToast('That folder doesn\'t contain an entries/ directory. Select the project root folder.');
+      dirHandle = null;
+      return false;
+    }
+    updateFolderStatus(true);
+    showToast('Folder connected — scanning entries/ for notebooks...');
+    await reload();
+    return true;
+  } catch (e) {
+    if (e.name === 'SecurityError') {
+      showToast('Permission denied — try serving via localhost (see Settings).');
+    } else if (e.name === 'AbortError') {
+      showToast('Folder selection cancelled. Tags will download as files.');
+    } else {
+      console.warn('Directory picker failed:', e);
+      showToast('Could not connect folder: ' + e.message);
+    }
+    return false;
+  }
+}
+
+function updateFolderStatus(connected) {
+  // Update old bottom button (kept as fallback)
+  const btn = document.getElementById('folder-status-btn');
+  const label = document.getElementById('folder-status-label');
+  if (btn && label) {
+    if (connected) {
+      btn.classList.remove('disconnected');
+      btn.classList.add('connected');
+      label.textContent = 'Folder connected';
+    } else {
+      btn.classList.remove('connected');
+      btn.classList.add('disconnected');
+      label.textContent = 'Connect folder to save tags';
+    }
+  }
+
+  // Update sidebar brand area
+  const logo = document.getElementById('sidebar-logo');
+  const brand = document.getElementById('sidebar-brand');
+  const subtitle = document.getElementById('sidebar-brand-subtitle');
+  if (logo) {
+    if (connected) {
+      logo.classList.remove('disconnected');
+      logo.classList.add('connected');
+    } else {
+      logo.classList.remove('connected');
+      logo.classList.add('disconnected');
+    }
+  }
+  if (subtitle) {
+    subtitle.textContent = connected ? 'Folder connected' : 'Connect a folder to save tags';
+  }
+  if (brand) {
+    brand.title = connected ? 'Folder connected' : 'Click to connect a folder';
+    if (connected) {
+      brand.classList.remove('disconnected');
+      brand.classList.add('connected');
+    } else {
+      brand.classList.remove('connected');
+      brand.classList.add('disconnected');
+    }
+  }
+}
+
+async function writeNotebookFile(notebookId, content, sourceFile) {
+  const nb = NOTEBOOKS.find(n => n.id === notebookId);
+  if (!nb) return false;
+
+  // ── Directory notebook: write to the specific entry file ──
+  if (nb.type === 'directory' && sourceFile) {
+    if (IS_TAURI && nb.absDir) {
+      try {
+        const filePath = nb.absDir + '/' + sourceFile;
+        await tauriInvoke('write_file', { path: filePath, content: content });
+        return true;
+      } catch (e) {
+        console.warn('Tauri dir file write failed:', e);
+      }
+    }
+    if (dirHandle) {
+      try {
+        const entriesDir = await dirHandle.getDirectoryHandle('entries');
+        const subDir = await entriesDir.getDirectoryHandle(nb.dirName || nb.file.replace('entries/', ''));
+        const fileHandle = await subDir.getFileHandle(sourceFile, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+        return true;
+      } catch (e) {
+        console.warn('Browser dir file write failed:', e);
+      }
+    }
+    return false;
+  }
+
+  // ── Single-file notebook (existing behavior) ──
+
+  // Tauri: direct filesystem write
+  if (IS_TAURI && nb.absPath) {
+    try {
+      await tauriInvoke('write_file', { path: nb.absPath, content: content });
+      return true;
+    } catch (e) {
+      console.warn('Tauri file write failed:', e);
+    }
+  }
+
+  // Browser: File System Access API
+  if (dirHandle) {
+    try {
+      const pathParts = nb.file.split('/');
+      let current = dirHandle;
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        current = await current.getDirectoryHandle(pathParts[i]);
+      }
+      const fileName = pathParts[pathParts.length - 1];
+      const fileHandle = await current.getFileHandle(fileName, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      return true;
+    } catch (e) {
+      console.warn('Direct file write failed, falling back to download:', e);
+    }
+  }
+
+  // Fallback: download
+  downloadNotebookFile(nb, content);
+  return 'downloaded';
+}
+
+function downloadNotebookFile(nb, content) {
+  const blob = new Blob([content], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const pathParts = nb.file.split('/');
+  a.download = pathParts[pathParts.length - 1];
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// TAG-CLICK NAVIGATION — clicking a tag in entry content
+// ============================================================
+
+function setupTagClicks() {
+  document.addEventListener('click', (e) => {
+    const tagEl = e.target.closest('[data-tag]');
+    if (!tagEl) return;
+
+    // If inside .entry-content, navigate to Tags page filtered to this tag
+    const entryContent = tagEl.closest('.entry-content');
+    if (entryContent) {
+      const tagName = tagEl.getAttribute('data-tag');
+      activeTagFilter = tagName;
+      navigate('tags');
+      renderTagsPage();
+    }
+  });
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    const nbPage = currentPage.startsWith('notebook-') ? currentPage.replace('notebook-', '') : null;
+    if (!nbPage) return;
+    const entries = notebookEntries[nbPage] || [];
+    const current = selectedEntry[nbPage] || 0;
+    let next;
+    if (e.key === 'ArrowUp' && current > 0) next = current - 1;
+    else if (e.key === 'ArrowDown' && current < entries.length - 1) next = current + 1;
+    else return;
+    e.preventDefault();
+    selectEntry(nbPage, next);
+  }
+});
+
+// ============================================================
+// APP UPDATES — git pull from remote
+// ============================================================
+
+async function checkForUpdates() {
+  if (!IS_TAURI) {
+    showToast('Update checks require the desktop app.');
+    return;
+  }
+
+  const btn = document.getElementById('update-btn');
+  const result = document.getElementById('update-result');
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  result.classList.remove('visible', 'success', 'error', 'no-change');
+
+  try {
+    const res = await tauriInvoke('check_for_updates');
+
+    if (res.update_available) {
+      result.innerHTML = res.message +
+        ' <a href="' + escapeHtml(res.release_url) + '" target="_blank" style="color: inherit; font-weight: 600;">Download &rarr;</a>';
+      if (res.release_notes) {
+        result.innerHTML += '<div style="margin-top: 8px; font-size: 12px; opacity: 0.85; white-space: pre-wrap;">' + escapeHtml(res.release_notes) + '</div>';
+      }
+      result.classList.add('visible', 'success');
+    } else if (res.current_version && !res.update_available) {
+      result.textContent = res.message;
+      result.classList.add('visible', 'no-change');
+    } else {
+      result.textContent = res.message;
+      result.classList.add('visible', 'error');
+    }
+  } catch (e) {
+    result.textContent = 'Error: ' + e;
+    result.classList.add('visible', 'error');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+async function saveGitHubRepo() {
+  const input = document.getElementById('github-repo-input');
+  const repo = (input.value || '').trim();
+  if (!repo) {
+    showToast('Please enter a repository in owner/repo format.');
+    return;
+  }
+  if (!/^[^/]+\/[^/]+$/.test(repo)) {
+    showToast('Invalid format. Use owner/repo (e.g. marcuskidan/entries).');
+    return;
+  }
+  try {
+    await tauriInvoke('set_github_repo', { repo });
+    showToast('GitHub repository saved.');
+  } catch (e) {
+    showToast('Error saving repo: ' + e);
+  }
+}
+
+async function initUpdateSection() {
+  const versionDisplay = document.getElementById('update-version-display');
+  if (!IS_TAURI) {
+    const btn = document.getElementById('update-btn');
+    const desc = document.getElementById('update-description');
+    btn.disabled = true;
+    desc.textContent = 'Update checks are available in the desktop app.';
+    return;
+  }
+  // Show current version
+  try {
+    const res = await tauriInvoke('check_for_updates');
+    if (res.current_version) {
+      versionDisplay.textContent = 'v' + res.current_version;
+    }
+  } catch (_) { /* version display is optional */ }
+  // Load saved GitHub repo into input
+  try {
+    const repo = await tauriInvoke('get_github_repo');
+    if (repo) {
+      document.getElementById('github-repo-input').value = repo;
+    }
+  } catch (_) {}
+}
+
+// ============================================================
+// APPLE NOTES IMPORT
+// ============================================================
+
+async function initAppleNotesSection() {
+  const section = document.getElementById('apple-notes-section');
+  const unavailable = document.getElementById('apple-notes-unavailable');
+  const controls = document.getElementById('apple-notes-controls');
+
+  if (!IS_TAURI) {
+    // Browser mode — show unavailable message
+    if (unavailable) unavailable.style.display = 'block';
+    if (controls) controls.style.display = 'none';
+    return;
+  }
+
+  // Check if Apple Notes database exists on this machine
+  try {
+    const detected = await tauriInvoke('detect_apple_notes');
+    if (detected) {
+      if (unavailable) unavailable.style.display = 'none';
+      if (controls) controls.style.display = 'block';
+    } else {
+      if (unavailable) {
+        unavailable.style.display = 'block';
+        unavailable.innerHTML = '<p style="opacity: 0.6; font-style: italic;">Apple Notes database not found on this machine. Make sure Notes.app has been used at least once.</p>';
+      }
+      if (controls) controls.style.display = 'none';
+    }
+  } catch (e) {
+    console.info('Apple Notes detection failed:', e);
+    if (unavailable) unavailable.style.display = 'block';
+    if (controls) controls.style.display = 'none';
+  }
+}
+
+async function previewAppleNotes() {
+  const btn = document.getElementById('import-preview-btn');
+  const resultsEl = document.getElementById('import-preview-results');
+  const countEl = document.getElementById('import-preview-count');
+  const listEl = document.getElementById('import-preview-list');
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    const includeTrashed = document.getElementById('import-include-trashed').checked;
+    const previews = await tauriInvoke('preview_apple_notes', { include_trashed: includeTrashed });
+
+    countEl.textContent = `${previews.length} note${previews.length !== 1 ? 's' : ''} found`;
+    listEl.innerHTML = previews.map(n => `
+      <div class="import-preview-item">
+        <span class="note-title">${escapeHtml(n.title)}</span>
+        <span class="note-folder">${escapeHtml(n.folder)}</span>
+        <span class="note-date">${n.creation_date}</span>
+      </div>
+    `).join('');
+
+    resultsEl.style.display = 'block';
+  } catch (e) {
+    showToast('Preview failed: ' + e);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+async function runAppleNotesImport() {
+  if (!IS_TAURI || !rootFolder) {
+    showToast('Import requires the Tauri app with a connected folder.');
+    return;
+  }
+
+  const btn = document.getElementById('import-run-btn');
+  const resultEl = document.getElementById('import-result');
+
+  btn.classList.add('loading');
+  btn.disabled = true;
+  resultEl.style.display = 'none';
+  resultEl.className = 'import-result';
+
+  try {
+    const config = {
+      notebook_name: document.getElementById('import-notebook-name').value.trim() || 'apple-notes',
+      date_format: document.getElementById('import-date-format').value.trim(),
+      include_trashed: document.getElementById('import-include-trashed').checked,
+    };
+
+    const result = await tauriInvoke('import_apple_notes', { root: rootFolder, config });
+
+    resultEl.style.display = 'block';
+
+    if (result.imported > 0) {
+      resultEl.className = 'import-result success';
+      let msg = `Imported <strong>${result.imported}</strong> note${result.imported !== 1 ? 's' : ''}`;
+      if (result.duplicates > 0) msg += `, ${result.duplicates} already existed`;
+      if (result.skipped > 0) msg += `, ${result.skipped} empty`;
+      if (result.failed > 0) msg += `, <strong>${result.failed} failed</strong>`;
+      msg += ` into <code>entries/${escapeHtml(result.notebook_name)}/</code>`;
+      resultEl.innerHTML = msg;
+
+      showToast(`Imported ${result.imported} notes! Reloading...`);
+
+      // Reload notebooks to pick up the new directory notebook
+      setTimeout(async () => {
+        await reload();
+        if (currentPage) navigate(currentPage);
+      }, 500);
+    } else if ((result.duplicates > 0 || result.skipped > 0) && result.failed === 0) {
+      resultEl.className = 'import-result';
+      resultEl.style.background = 'var(--blue-bg)';
+      resultEl.style.border = '1px solid var(--blue-border)';
+      resultEl.style.color = 'var(--blue)';
+      let parts = [];
+      if (result.duplicates > 0) parts.push(`${result.duplicates} already imported`);
+      if (result.skipped > 0) parts.push(`${result.skipped} empty`);
+      resultEl.textContent = `No new notes — ${parts.join(', ')}. Safe to re-sync anytime.`;
+    } else {
+      resultEl.className = 'import-result error';
+      resultEl.textContent = result.message;
+    }
+  } catch (e) {
+    resultEl.style.display = 'block';
+    resultEl.className = 'import-result error';
+    resultEl.textContent = 'Import failed: ' + e;
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+async function reload() {
+  // Save scroll state before DOM rebuild
+  if (currentPage) saveScrollState(currentPage);
+
+  await loadNotebooks();
+  renderNav();
+  renderHomeStats();
+  renderTimeline();
+  renderNotebookPages();
+  renderTagsPage();
+  // Restore active page after DOM rebuild (renderNotebookPages replaces
+  // all page elements, stripping the 'active' class).
+  if (currentPage) navigate(currentPage);
+}
+
+// (Tag hover tooltip removed — tags are now managed via the inspector cards)
+
+async function init() {
+  // ── Tauri: restore saved folder from previous session ──
+  if (IS_TAURI) {
+    try {
+      const saved = await tauriInvoke('get_saved_folder');
+      if (saved) {
+        const valid = await tauriInvoke('validate_folder', { path: saved });
+        if (valid) {
+          rootFolder = saved;
+          updateFolderStatus(true);
+          console.info('Restored saved folder:', saved);
+        } else {
+          console.warn('Saved folder no longer valid:', saved);
+        }
+      }
+    } catch (e) {
+      console.info('Could not restore saved folder:', e);
+    }
+  }
+
+  // Update section: load version + saved repo, or disable in browser mode
+  await initUpdateSection();
+
+  await reload();
+  setupSelectionToolbar();
+  setupTagClicks();
+  initAppleNotesSection();
+}
+
+init();
+</script>
+</body>
+</html>
