@@ -10,6 +10,7 @@
     --bg: #faf9f0;
     --bg-card: #fdfcf7;
     --bg-hover: #f3f2e8;
+    --bg-active: #e8e6d9;
     --bg-nav: #f5f4eb;
     --bg-input: #f0efe6;
     --text: #1a1918;
@@ -54,6 +55,7 @@
     --bg: #1a1918;
     --bg-card: #242320;
     --bg-hover: #2e2d28;
+    --bg-active: #3a3830;
     --bg-nav: #1f1e1b;
     --bg-input: #2e2d28;
     --text: #e8e6df;
@@ -272,7 +274,7 @@
     max-width: 1200px;
   }
   .main.has-inspector {
-    max-width: calc(1200px + 260px);
+    max-width: calc(1200px + 520px);
   }
 
   .page { display: none; }
@@ -356,27 +358,28 @@
   .filter-pill:hover { border-color: var(--text-tertiary); color: var(--text); }
   .filter-pill.active { background: var(--text); color: var(--bg); border-color: var(--text); }
 
-  /* Slideshow layout — used for notebook + entry detail */
+  /* Slideshow layout — entry detail content */
   .slideshow-layout {
-    display: flex;
-    gap: 0;
-    height: calc(100vh - 170px);
-    min-height: 420px;
+    height: calc(100vh - 200px);
+    min-height: 320px;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
     background: var(--bg-card);
   }
 
-  /* Thumbnail panel (left) */
+  /* Thumbnail panel (left, floating outside slideshow) */
   .thumb-panel {
-    width: 260px;
-    min-width: 260px;
-    border-right: 1px solid var(--border);
+    width: 240px;
+    min-width: 240px;
     overflow-y: auto;
-    background: var(--bg);
+    max-height: calc(100vh - 200px);
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
   }
 
   .thumb-panel::-webkit-scrollbar { width: 4px; }
@@ -384,18 +387,18 @@
   .thumb-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
   .thumb-item {
-    padding: 12px 14px;
+    padding: 10px 12px;
     cursor: pointer;
-    border-bottom: 1px solid var(--border-light);
+    border-radius: var(--radius);
     transition: all 0.12s ease;
     position: relative;
+    margin: 2px 0;
   }
 
   .thumb-item:hover { background: var(--bg-hover); }
 
   .thumb-item.active {
-    background: var(--bg-card);
-    box-shadow: inset 3px 0 0 var(--accent);
+    background: var(--bg-active);
   }
 
   .thumb-date {
@@ -405,8 +408,6 @@
     margin-bottom: 2px;
     font-family: var(--font-serif);
   }
-
-  .thumb-item.active .thumb-date { color: var(--accent); }
 
   .thumb-preview {
     font-size: 12px;
@@ -426,22 +427,21 @@
 
   /* Date group headers in the thumb panel */
   .thumb-month-header {
-    padding: 10px 14px 6px;
+    padding: 10px 12px 6px;
     font-size: 10px;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--text-tertiary);
-    background: var(--bg);
-    border-bottom: 1px solid var(--border-light);
     position: sticky;
     top: 0;
     z-index: 2;
+    background: var(--bg-card);
   }
 
   /* Detail panel (center) */
   .detail-panel {
-    flex: 1;
+    height: 100%;
     overflow-y: auto;
     padding: 28px 32px;
     scrollbar-width: thin;
@@ -469,22 +469,23 @@
     min-width: 240px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    position: sticky;
-    top: 32px;
-    max-height: calc(100vh - 64px);
+    gap: 0;
+    max-height: calc(100vh - 200px);
     overflow-y: auto;
     scrollbar-width: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
   }
   .inspector-cards::-webkit-scrollbar { display: none; }
   .inspector-cards.hidden { display: none; }
 
   .inspector-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
     padding: 14px 16px;
+  }
+  .inspector-card + .inspector-card {
+    border-top: 1px solid var(--border);
   }
 
   .inspector-card-title {
@@ -666,7 +667,7 @@
     padding: 4px 0;
   }
 
-  /* Tagging mode toggle button */
+  /* Tag button in inspector panel */
   .tagging-mode-btn {
     display: flex;
     align-items: center;
@@ -679,22 +680,20 @@
     font-size: 10px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.2s;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
   .tagging-mode-btn:hover { background: var(--bg-hover); color: var(--text); }
-  .tagging-mode-btn.active {
-    background: var(--purple-bg);
+  .tagging-mode-btn.has-selection {
     border-color: var(--purple);
     color: var(--purple);
+    background: var(--purple-bg);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--purple) 35%, transparent);
   }
-  .tagging-mode-btn.highlight-hint {
-    animation: tagging-hint-pulse 0.6s ease-in-out 2;
-  }
-  @keyframes tagging-hint-pulse {
-    0%, 100% { border-color: var(--border); background: transparent; }
-    50% { border-color: var(--purple); background: var(--purple-bg); }
+  .tagging-mode-btn.has-selection:hover {
+    background: var(--purple-bg);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--purple) 50%, transparent);
   }
 
   /* Arrow to navigate to All Tags page — visible on hover only */
@@ -1301,37 +1300,6 @@
   .tag-confirm-bar .tag-confirm-cancel:hover { border-color: var(--text-tertiary); color: var(--text); }
 
   /* Selection toolbar */
-  .selection-toolbar {
-    position: fixed;
-    z-index: 200;
-    display: none;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-md);
-    padding: 4px;
-    gap: 2px;
-  }
-
-  .selection-toolbar.visible { display: flex; }
-
-  .selection-toolbar button {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border: none;
-    background: none;
-    color: var(--purple);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: var(--radius);
-    transition: background 0.12s;
-    font-family: inherit;
-  }
-
-  .selection-toolbar button:hover { background: var(--purple-bg); }
 
   /* Tag modal */
   .tag-modal-overlay {
@@ -2073,10 +2041,11 @@
   }
 
   @media (max-width: 900px) {
-    .slideshow-layout { flex-direction: column; height: auto; min-height: auto; }
-    .thumb-panel { width: 100%; min-width: 100%; max-height: 200px; border-right: none; border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; overflow-y: hidden; }
-    .thumb-item { border-bottom: none; border-right: 1px solid var(--border-light); min-width: 200px; }
-    .thumb-item.active { box-shadow: inset 0 -3px 0 var(--accent); }
+    .notebook-content-wrapper { flex-direction: column; }
+    .slideshow-layout { height: auto; min-height: auto; }
+    .thumb-panel { width: 100%; min-width: 100%; max-height: 200px; position: static; display: flex; overflow-x: auto; overflow-y: hidden; border-bottom: 1px solid var(--border); }
+    .thumb-item { border-bottom: none; border-right: 1px solid var(--border-light); border-radius: 0; min-width: 200px; margin: 0; }
+    .thumb-item.active { background: var(--bg-active); }
     .thumb-month-header { display: none; }
     .detail-panel { padding: 16px; }
     .inspector-cards { display: none !important; }
@@ -2136,6 +2105,10 @@
     </div>
 
     <div class="sidebar-footer" style="margin-top:auto;">
+      <button class="theme-toggle" onclick="handleRefresh()" id="refresh-btn">
+        <span class="nav-icon" id="refresh-icon">&#8635;</span>
+        <span id="refresh-label">Refresh</span>
+      </button>
       <button class="theme-toggle" onclick="toggleTheme()">
         <span class="nav-icon" id="theme-icon">&#9790;</span>
         <span id="theme-label">Dark mode</span>
@@ -2413,7 +2386,7 @@ git push origin v0.2.0</code></pre>
   <div class="inspector-card" id="inspector-card-tags">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="inspector-card-title" style="margin-bottom:0;">Tags</div>
-      <button class="tagging-mode-btn" id="tagging-mode-btn" onclick="toggleTaggingMode()" title="Enable tagging mode to highlight and tag text">&#9873; Tag</button>
+      <button class="tagging-mode-btn" id="tagging-mode-btn" onclick="handleTagButton()" title="Highlight text in an entry, then click to tag it">&#9873; Tag</button>
     </div>
     <div class="inspector-tag-list" id="inspector-tags">
       <div class="inspector-tag-empty">No entry selected</div>
@@ -2423,11 +2396,6 @@ git push origin v0.2.0</code></pre>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
-
-<!-- Selection toolbar (appears near highlighted text) -->
-<div class="selection-toolbar" id="selection-toolbar">
-  <button onclick="openTagModal()">&#9873; Tag selection</button>
-</div>
 
 <!-- Tag modal -->
 <div class="tag-modal-overlay" id="tag-modal-overlay">
@@ -2735,7 +2703,6 @@ let selectedEntry = {};    // Tracks selected entry index per notebook
 let allTags = {};          // { tagName: [ { text, entry, notebookId, date } ... ] }
 let activeTagFilter = null;
 let pendingSelection = null; // Stores selection info for tagging
-let taggingMode = false;     // When true, text selection shows the tag toolbar
 let dirHandle = null;        // File System Access API directory handle
 let rawNotebookTexts = {};   // Raw .md content keyed by notebook id (for rewriting)
 let rawDirNotebookTexts = {}; // For directory notebooks: { notebookId: { filename: text } }
@@ -3297,6 +3264,13 @@ function renderTimeline() {
 function renderNotebookPages() {
   const container = document.getElementById('notebook-pages-container');
 
+  // Detach inspector-cards before destroying the DOM so it isn't lost
+  const inspectorCards = document.getElementById('inspector-cards');
+  if (inspectorCards && inspectorCards.parentElement) {
+    document.body.appendChild(inspectorCards);
+    inspectorCards.classList.add('hidden');
+  }
+
   container.innerHTML = NOTEBOOKS.map(nb => `
     <div class="page" id="page-notebook-${nb.id}">
       <div class="page-header">
@@ -3310,8 +3284,8 @@ function renderNotebookPages() {
       </div>
 
       <div class="notebook-content-wrapper" id="nb-wrapper-${nb.id}">
+        <div class="thumb-panel" id="thumb-panel-${nb.id}"></div>
         <div class="slideshow-layout" id="slideshow-${nb.id}">
-          <div class="thumb-panel" id="thumb-panel-${nb.id}"></div>
           <div class="detail-panel" id="detail-panel-${nb.id}">
             <div class="detail-panel-empty">
               <div class="empty-icon">&#128196;</div>
@@ -3323,12 +3297,14 @@ function renderNotebookPages() {
     </div>
   `).join('');
 
-  // Render thumbnails and auto-select first entry for each notebook
+  // Render thumbnails and restore previously selected entry (or default to first)
   NOTEBOOKS.forEach(nb => {
     renderThumbnails(nb.id);
     const entries = notebookEntries[nb.id] || [];
     if (entries.length > 0) {
-      selectEntry(nb.id, 0);
+      const prevIndex = selectedEntry[nb.id];
+      const restoreIndex = (prevIndex != null && prevIndex < entries.length) ? prevIndex : 0;
+      selectEntry(nb.id, restoreIndex);
     }
   });
 }
@@ -4184,40 +4160,44 @@ function removeTagSpan(fullText, tagName, plainText) {
 }
 
 // ============================================================
-// SELECTION TOOLBAR — appears when user highlights text in entries
+// SELECTION TRACKING — tracks highlighted text for the Tag button
 // ============================================================
 
-function toggleTaggingMode() {
-  taggingMode = !taggingMode;
+function updateTagButtonGlow() {
   const btn = document.getElementById('tagging-mode-btn');
-  if (btn) {
-    btn.classList.toggle('active', taggingMode);
+  if (btn) btn.classList.toggle('has-selection', !!pendingSelection);
+}
+
+function handleTagButton() {
+  if (pendingSelection) {
+    openTagModal();
+  } else {
+    showToast('Highlight text in an entry, then click this button to tag it.');
   }
 }
 
 function setupSelectionToolbar() {
   document.addEventListener('mouseup', (e) => {
-    const toolbar = document.getElementById('selection-toolbar');
     const modalOverlay = document.getElementById('tag-modal-overlay');
 
-    // Don't interfere if the click was on the toolbar or modal
-    if (toolbar.contains(e.target) || modalOverlay.contains(e.target)) return;
+    // Don't interfere if the click was on the modal
+    if (modalOverlay.contains(e.target)) return;
 
     const sel = window.getSelection();
     const text = sel.toString().trim();
 
     if (!text || text.length < 2) {
-      toolbar.classList.remove('visible');
       pendingSelection = null;
+      updateTagButtonGlow();
       return;
     }
 
-    // Only show toolbar when selection is inside .entry-content
+    // Only track selection when it is inside .entry-content
     const anchorNode = sel.anchorNode;
     const entryContent = anchorNode ? anchorNode.parentElement?.closest('.entry-content') : null;
     if (!entryContent) {
-      toolbar.classList.remove('visible');
       pendingSelection = null;
+      updateTagButtonGlow();
       return;
     }
 
@@ -4236,34 +4216,16 @@ function setupSelectionToolbar() {
       entryIdx: entryIdx,
       entry: entry,
     };
-
-    // Only show tag toolbar if tagging mode is enabled
-    if (taggingMode) {
-      // Position toolbar near selection
-      const range = sel.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      toolbar.style.left = Math.min(rect.left + rect.width / 2 - 60, window.innerWidth - 160) + 'px';
-      toolbar.style.top = (rect.top - 44) + 'px';
-      toolbar.classList.add('visible');
-    } else {
-      toolbar.classList.remove('visible');
-      // Subtle hint: pulse the tagging mode button so the user knows to enable it
-      const hintBtn = document.getElementById('tagging-mode-btn');
-      if (hintBtn && !hintBtn.classList.contains('active')) {
-        hintBtn.classList.remove('highlight-hint');
-        // Force reflow to restart animation
-        void hintBtn.offsetWidth;
-        hintBtn.classList.add('highlight-hint');
-      }
-    }
+    updateTagButtonGlow();
   });
 
-  // Hide toolbar on click elsewhere
+  // Clear pending selection when clicking elsewhere (but not on tag button or modal)
   document.addEventListener('mousedown', (e) => {
-    const toolbar = document.getElementById('selection-toolbar');
-    if (!toolbar.contains(e.target) && !document.getElementById('tag-modal-overlay').contains(e.target)) {
-      toolbar.classList.remove('visible');
-    }
+    const tagBtn = document.getElementById('tagging-mode-btn');
+    const modalOverlay = document.getElementById('tag-modal-overlay');
+    if (tagBtn && tagBtn.contains(e.target)) return;
+    if (modalOverlay && modalOverlay.contains(e.target)) return;
+    // Selection will be re-evaluated on mouseup; no action needed here
   });
 }
 
@@ -4295,7 +4257,6 @@ function openTagModal() {
   document.getElementById('tag-apply-btn').disabled = true;
 
   overlay.classList.add('visible');
-  document.getElementById('selection-toolbar').classList.remove('visible');
 
   setTimeout(() => input.focus(), 100);
 }
@@ -4303,6 +4264,7 @@ function openTagModal() {
 function closeTagModal() {
   document.getElementById('tag-modal-overlay').classList.remove('visible');
   pendingSelection = null;
+  updateTagButtonGlow();
 }
 
 function selectExistingTag(name) {
@@ -4946,6 +4908,30 @@ async function reload() {
   // Restore active page after DOM rebuild (renderNotebookPages replaces
   // all page elements, stripping the 'active' class).
   if (currentPage) navigate(currentPage);
+}
+
+async function handleRefresh() {
+  const icon = document.getElementById('refresh-icon');
+  const label = document.getElementById('refresh-label');
+  const btn = document.getElementById('refresh-btn');
+
+  // Spin the icon and disable re-clicks while refreshing
+  btn.disabled = true;
+  icon.style.display = 'inline-block';
+  icon.style.animation = 'spin 0.6s linear infinite';
+  label.textContent = 'Refreshing…';
+
+  try {
+    await reload();
+    showToast('Refreshed successfully');
+  } catch (e) {
+    console.error('Refresh failed:', e);
+    showToast('Refresh failed — check console');
+  } finally {
+    icon.style.animation = '';
+    label.textContent = 'Refresh';
+    btn.disabled = false;
+  }
 }
 
 // (Tag hover tooltip removed — tags are now managed via the inspector cards)

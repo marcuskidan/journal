@@ -270,7 +270,7 @@ fn days_to_ymd(days: i64) -> (i32, u32, u32) {
 /// Try to decompress bytes using gzip, then zlib, then raw deflate.
 /// Returns decompressed bytes on success, or None if all methods fail.
 fn try_decompress(bytes: &[u8]) -> Option<Vec<u8>> {
-    // Strategy 1: Gzip (traditional Apple Notes format)
+    // Strategy 1: Gzip
     {
         let mut decoder = GzDecoder::new(bytes);
         let mut buf = Vec::new();
@@ -278,50 +278,92 @@ fn try_decompress(bytes: &[u8]) -> Option<Vec<u8>> {
             return Some(buf);
         }
     }
-
-    // Strategy 2: Zlib (deflate with zlib header — newer macOS may use this)
-    {
-        use flate2::read::ZlibDecoder;
-        let mut decoder = ZlibDecoder::new(bytes);
-        let mut buf = Vec::new();
-        if decoder.read_to_end(&mut buf).is_ok() && !buf.is_empty() {
-            return Some(buf);
-        }
+    // Strategy 2: Zlib
+    if let Some(buf) = try_decompress_zlib(bytes) {
+        return Some(buf);
     }
+    // Strategy 3: Raw deflate
+    try_decompress_deflate(bytes)
+}
 
-    // Strategy 3: Raw deflate (no header at all)
-    {
-        use flate2::read::DeflateDecoder;
-        let mut decoder = DeflateDecoder::new(bytes);
-        let mut buf = Vec::new();
-        if decoder.read_to_end(&mut buf).is_ok() && !buf.is_empty() {
-            return Some(buf);
-        }
-    }
-
-    None
+/// Format the first N bytes of a slice as hex for diagnostics.
+fn hex_preview(data: &[u8], n: usize) -> String {
+    data[..data.len().min(n)]
+        .iter()
+        .map(|b| format!("{:02X}", b))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// Decode hex string → decompress → protobuf → ANDocument.
 /// Tries multiple decompression strategies and falls back to raw protobuf.
+/// Returns detailed diagnostics on failure so we can pinpoint the issue.
 fn decode_note_data(hexdata: &str) -> Result<ANDocument, String> {
     // Hex decode
     let bytes = hex_decode(hexdata)?;
 
-    // Strategy A: Decompress the full blob, then decode protobuf
-    if let Some(decompressed) = try_decompress(&bytes) {
-        if let Ok(doc) = ANDocument::decode(&decompressed[..]) {
-            return Ok(doc);
+    // Track what happened at each stage for diagnostics
+    let mut gzip_result: Option<Result<Vec<u8>, String>> = None;
+    let mut proto_error: Option<String> = None;
+
+    // Stage 1: Try gzip decompression (most common format — first bytes are 1F 8B)
+    {
+        let mut decoder = GzDecoder::new(&bytes[..]);
+        let mut buf = Vec::new();
+        match decoder.read_to_end(&mut buf) {
+            Ok(_) if !buf.is_empty() => {
+                // Gzip worked! Try protobuf decode
+                match ANDocument::decode(&buf[..]) {
+                    Ok(doc) => return Ok(doc),
+                    Err(e) => {
+                        proto_error = Some(format!(
+                            "Gzip OK ({} -> {} bytes), protobuf failed: {}. \
+                             Decompressed starts: [{}]",
+                            bytes.len(),
+                            buf.len(),
+                            e,
+                            hex_preview(&buf, 20)
+                        ));
+                        gzip_result = Some(Ok(buf));
+                    }
+                }
+            }
+            Ok(_) => {
+                gzip_result = Some(Err("decompressed to empty".into()));
+            }
+            Err(e) => {
+                gzip_result = Some(Err(format!("{}", e)));
+            }
         }
     }
 
-    // Strategy B: Raw protobuf (no compression — some macOS versions store it this way)
+    // Stage 2: Try zlib and raw deflate
+    let decompress_attempts = [
+        ("zlib", try_decompress_zlib(&bytes)),
+        ("raw_deflate", try_decompress_deflate(&bytes)),
+    ];
+    for (method, result) in &decompress_attempts {
+        if let Some(decompressed) = result {
+            match ANDocument::decode(&decompressed[..]) {
+                Ok(doc) => return Ok(doc),
+                Err(e) => {
+                    if proto_error.is_none() {
+                        proto_error = Some(format!(
+                            "{} OK ({} -> {} bytes), protobuf failed: {}",
+                            method, bytes.len(), decompressed.len(), e
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    // Stage 3: Raw protobuf (no compression)
     if let Ok(doc) = ANDocument::decode(&bytes[..]) {
         return Ok(doc);
     }
 
-    // Strategy C: Skip potential header bytes (some blobs have a small envelope)
-    // Try skipping 2 or 4 bytes, then decompress + decode
+    // Stage 4: Skip header bytes + retry decompression
     for skip in [2usize, 4, 8] {
         if bytes.len() > skip {
             if let Some(decompressed) = try_decompress(&bytes[skip..]) {
@@ -329,25 +371,55 @@ fn decode_note_data(hexdata: &str) -> Result<ANDocument, String> {
                     return Ok(doc);
                 }
             }
-            // Also try raw protobuf after skipping
             if let Ok(doc) = ANDocument::decode(&bytes[skip..]) {
                 return Ok(doc);
             }
         }
     }
 
-    // Build a diagnostic message with the first few bytes for debugging
-    let preview_len = bytes.len().min(16);
-    let first_bytes: Vec<String> = bytes[..preview_len]
-        .iter()
-        .map(|b| format!("{:02X}", b))
-        .collect();
-    Err(format!(
-        "Could not decode note data ({} bytes). First bytes: [{}]. \
-         Tried gzip, zlib, raw deflate, raw protobuf, and header-skip variants.",
-        bytes.len(),
-        first_bytes.join(" ")
-    ))
+    // Build a detailed diagnostic error
+    let compressed_preview = hex_preview(&bytes, 16);
+
+    if let Some(pe) = proto_error {
+        // Decompression worked but protobuf failed — this is the key info
+        Err(format!(
+            "Decompression succeeded but protobuf decode failed. {}",
+            pe
+        ))
+    } else {
+        let gz_detail = match &gzip_result {
+            Some(Err(e)) => format!("gzip error: {}", e),
+            _ => "gzip: unknown".into(),
+        };
+        Err(format!(
+            "All decompression methods failed ({} bytes). First bytes: [{}]. {}",
+            bytes.len(),
+            compressed_preview,
+            gz_detail
+        ))
+    }
+}
+
+fn try_decompress_zlib(bytes: &[u8]) -> Option<Vec<u8>> {
+    use flate2::read::ZlibDecoder;
+    let mut decoder = ZlibDecoder::new(bytes);
+    let mut buf = Vec::new();
+    if decoder.read_to_end(&mut buf).is_ok() && !buf.is_empty() {
+        Some(buf)
+    } else {
+        None
+    }
+}
+
+fn try_decompress_deflate(bytes: &[u8]) -> Option<Vec<u8>> {
+    use flate2::read::DeflateDecoder;
+    let mut decoder = DeflateDecoder::new(bytes);
+    let mut buf = Vec::new();
+    if decoder.read_to_end(&mut buf).is_ok() && !buf.is_empty() {
+        Some(buf)
+    } else {
+        None
+    }
 }
 
 fn hex_decode(hex: &str) -> Result<Vec<u8>, String> {
