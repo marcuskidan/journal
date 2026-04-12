@@ -71,6 +71,7 @@
     --blue-bg: #1a2030;
     --blue-border: #283848;
     --purple-bg: #2e2218;
+    --purple-border: rgba(196, 121, 90, 0.2);
     --orange-bg: #24201a;
     --orange-border: #4a3820;
     --tag-flash-bg: rgba(196, 121, 90, 0.3);
@@ -562,6 +563,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
+    margin-top: 4px;
   }
   .inspector-icon-btn {
     width: 28px;
@@ -569,15 +571,24 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-    background: var(--bg-card);
+    background: var(--bg-input);
+    color: var(--text);
     cursor: pointer;
     font-size: 14px;
     transition: all 0.12s;
   }
-  .inspector-icon-btn:hover { border-color: var(--accent); background: var(--accent-light); }
-  .inspector-icon-btn.active { border-color: var(--accent); background: var(--accent-light); }
+  .inspector-icon-btn:hover { border-color: var(--accent); background: var(--accent-light); color: var(--text); }
+  .inspector-icon-btn.active { border-color: var(--accent); background: var(--accent-light); color: var(--text); }
+
+  /* Icon locked display */
+  .inspector-icon-current {
+    font-size: 18px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+  }
 
   /* Tag navigator items */
   .inspector-tag-list {
@@ -654,6 +665,59 @@
     font-style: italic;
     padding: 4px 0;
   }
+
+  /* Tagging mode toggle button */
+  .tagging-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tagging-mode-btn:hover { background: var(--bg-hover); color: var(--text); }
+  .tagging-mode-btn.active {
+    background: var(--purple-bg);
+    border-color: var(--purple);
+    color: var(--purple);
+  }
+  .tagging-mode-btn.highlight-hint {
+    animation: tagging-hint-pulse 0.6s ease-in-out 2;
+  }
+  @keyframes tagging-hint-pulse {
+    0%, 100% { border-color: var(--border); background: transparent; }
+    50% { border-color: var(--purple); background: var(--purple-bg); }
+  }
+
+  /* Arrow to navigate to All Tags page — visible on hover only */
+  .inspector-tag-goto {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    border-radius: 3px;
+    font-size: 10px;
+    padding: 0;
+    transition: all 0.12s;
+    opacity: 0;
+    flex-shrink: 0;
+    margin-left: 2px;
+  }
+  .inspector-tag-item:hover .inspector-tag-goto { opacity: 1; }
+  .inspector-tag-goto:hover { background: var(--bg-input); color: var(--purple); }
 
   .detail-panel-empty {
     display: flex;
@@ -2331,7 +2395,11 @@ git push origin v0.2.0</code></pre>
     </div>
     <div class="inspector-field">
       <label class="inspector-label">Icon</label>
-      <div class="inspector-icon-picker" id="inspector-nb-icons"></div>
+      <div class="inspector-editable" id="inspector-nb-icon-display">
+        <span class="inspector-icon-current" id="inspector-nb-icon-val"></span>
+        <button class="inspector-edit-btn" onclick="startEditField('nb-icon')" title="Change icon">&#9998;</button>
+      </div>
+      <div class="inspector-icon-picker" id="inspector-nb-icons" style="display:none"></div>
     </div>
   </div>
 
@@ -2343,7 +2411,10 @@ git push origin v0.2.0</code></pre>
   </div>
 
   <div class="inspector-card" id="inspector-card-tags">
-    <div class="inspector-card-title">Tags</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="inspector-card-title" style="margin-bottom:0;">Tags</div>
+      <button class="tagging-mode-btn" id="tagging-mode-btn" onclick="toggleTaggingMode()" title="Enable tagging mode to highlight and tag text">&#9873; Tag</button>
+    </div>
     <div class="inspector-tag-list" id="inspector-tags">
       <div class="inspector-tag-empty">No entry selected</div>
     </div>
@@ -2385,7 +2456,83 @@ git push origin v0.2.0</code></pre>
 let NOTEBOOKS = [];
 
 // Icon palette — cycles through these for discovered notebooks
-const NB_ICONS = ['&#9998;', '&#9737;', '&#9733;', '&#9830;', '&#9827;', '&#9829;', '&#9824;'];
+const NB_ICONS = [
+  // Writing
+  '&#9998;',   // ✎ lower-right pencil
+  '&#9999;',   // ✏ pencil
+  '&#10002;',  // ✒ black nib
+  '&#9997;',   // ✍ writing hand
+  // Stars
+  '&#9733;',   // ★ black star
+  '&#9734;',   // ☆ white star
+  '&#10022;',  // ✦ four pointed star
+  '&#10023;',  // ✧ four pointed star outline
+  '&#10036;',  // ✴ eight pointed star
+  '&#10039;',  // ✷ eight pointed rectilinear star
+  '&#10041;',  // ✹ twelve pointed star
+  // Florettes & Flowers
+  '&#10047;',  // ✿ black florette
+  '&#10048;',  // ❀ white florette
+  '&#10049;',  // ❁ eight petalled florette
+  '&#10046;',  // ✾ six petalled florette
+  '&#10051;',  // ❃ teardrop-spoked pinwheel
+  '&#10059;',  // ❋ heavy propeller asterisk
+  // Celestial
+  '&#9737;',   // ☉ sun symbol
+  '&#9790;',   // ☾ crescent moon
+  '&#9728;',   // ☀ sun
+  // Card Suits
+  '&#9830;',   // ♦ diamond
+  '&#9827;',   // ♣ club
+  '&#9829;',   // ♥ heart
+  '&#9824;',   // ♠ spade
+  // Science & Tools
+  '&#9879;',   // ⚗ alembic
+  '&#9881;',   // ⚙ gear
+  '&#9878;',   // ⚖ scales
+  '&#9876;',   // ⚔ crossed swords
+  '&#9883;',   // ⚛ atom
+  // Music
+  '&#9833;',   // ♩ quarter note
+  '&#9834;',   // ♪ eighth note
+  '&#9835;',   // ♫ beamed eighth notes
+  '&#9836;',   // ♬ beamed sixteenth notes
+  // Weather & Nature
+  '&#10052;',  // ❄ snowflake
+  '&#10053;',  // ❅ tight snowflake
+  '&#10054;',  // ❆ heavy chevron snowflake
+  '&#9748;',   // ☔ umbrella with rain
+  '&#9729;',   // ☁ cloud
+  // Warning & Hazard
+  '&#9889;',   // ⚡ lightning
+  '&#9888;',   // ⚠ warning
+  '&#9762;',   // ☢ radioactive
+  '&#9763;',   // ☣ biohazard
+  // Peace & Balance
+  '&#9774;',   // ☮ peace
+  '&#9775;',   // ☯ yin yang
+  // Geometric Shapes
+  '&#9670;',   // ◆ black diamond
+  '&#9671;',   // ◇ white diamond
+  '&#9679;',   // ● black circle
+  '&#9675;',   // ○ white circle
+  '&#9650;',   // ▲ black triangle up
+  '&#9651;',   // △ white triangle up
+  '&#9632;',   // ■ black square
+  '&#9633;',   // □ white square
+  // Hearts & Decorative
+  '&#10084;',  // ❤ heavy heart
+  '&#10085;',  // ❥ rotated heart bullet
+  '&#10086;',  // ❦ floral heart
+  '&#10087;',  // ❧ rotated floral heart
+  // Math & Logic
+  '&#8734;',   // ∞ infinity
+  '&#960;',    // π pi
+  '&#916;',    // Δ delta
+  '&#8721;',   // ∑ sigma
+  '&#10003;',  // ✓ check mark
+  '&#10007;',  // ✗ ballot X
+];
 
 // ============================================================
 // TAURI BRIDGE — detect if running inside Tauri
@@ -2588,6 +2735,7 @@ let selectedEntry = {};    // Tracks selected entry index per notebook
 let allTags = {};          // { tagName: [ { text, entry, notebookId, date } ... ] }
 let activeTagFilter = null;
 let pendingSelection = null; // Stores selection info for tagging
+let taggingMode = false;     // When true, text selection shows the tag toolbar
 let dirHandle = null;        // File System Access API directory handle
 let rawNotebookTexts = {};   // Raw .md content keyed by notebook id (for rewriting)
 let rawDirNotebookTexts = {}; // For directory notebooks: { notebookId: { filename: text } }
@@ -3295,8 +3443,15 @@ function hideInspectorCards() {
 function renderInspectorIcons(notebookId, currentIcon) {
   // Only render if this notebook is currently shown in inspector
   if (_inspectorNotebookId !== notebookId) return;
+
+  // Update locked display
+  const iconVal = document.getElementById('inspector-nb-icon-val');
+  if (iconVal) iconVal.innerHTML = currentIcon;
+
+  // Render picker grid (hidden by default)
   const container = document.getElementById('inspector-nb-icons');
   if (!container) return;
+  container.style.display = 'none';
   container.innerHTML = NB_ICONS.map(icon => `
     <button class="inspector-icon-btn ${icon === currentIcon ? 'active' : ''}"
             onclick="updateNotebookIcon(this)" title="Set icon">
@@ -3305,9 +3460,25 @@ function renderInspectorIcons(notebookId, currentIcon) {
   `).join('');
 }
 
+function closeIconPickerOnClickOutside(e) {
+  const picker = document.getElementById('inspector-nb-icons');
+  const display = document.getElementById('inspector-nb-icon-display');
+  if (picker && !picker.contains(e.target) && display && !display.contains(e.target)) {
+    picker.style.display = 'none';
+    document.removeEventListener('click', closeIconPickerOnClickOutside);
+  }
+}
+
 // ── Pencil-edit pattern ──
 function startEditField(fieldId) {
-  if (fieldId === 'nb-name') {
+  if (fieldId === 'nb-icon') {
+    const picker = document.getElementById('inspector-nb-icons');
+    if (picker) picker.style.display = '';
+    setTimeout(() => {
+      document.addEventListener('click', closeIconPickerOnClickOutside);
+    }, 0);
+    return;
+  } else if (fieldId === 'nb-name') {
     document.getElementById('inspector-nb-name-display').style.display = 'none';
     const input = document.getElementById('inspector-nb-name-input');
     const nb = NOTEBOOKS.find(n => n.id === _inspectorNotebookId);
@@ -3382,7 +3553,14 @@ function updateNotebookIcon(btnEl) {
   if (picker) {
     picker.querySelectorAll('.inspector-icon-btn').forEach(b => b.classList.remove('active'));
     btnEl.classList.add('active');
+    // Close picker after selection
+    picker.style.display = 'none';
+    document.removeEventListener('click', closeIconPickerOnClickOutside);
   }
+
+  // Update locked display
+  const iconVal = document.getElementById('inspector-nb-icon-val');
+  if (iconVal) iconVal.innerHTML = newIcon;
 }
 
 function updateInspector(notebookId, entryIndex) {
@@ -3454,6 +3632,7 @@ function updateInspector(notebookId, entryIndex) {
                onmouseleave="unhighlightAllTags('${safeName}')">
             <span class="inspector-tag-dot"></span>
             <span class="inspector-tag-name">${displayName}</span>
+            <button class="inspector-tag-goto" onclick="event.stopPropagation();gotoAllTagsFor('${safeName}')" title="View all &quot;${displayName}&quot; entries">&#8594;</button>
             ${count > 1 ? `
               <div class="inspector-tag-nav">
                 <button class="inspector-tag-nav-btn" onclick="event.stopPropagation();jumpToTag('${safeName}', -1)" title="Previous">&#9664;</button>
@@ -4008,6 +4187,14 @@ function removeTagSpan(fullText, tagName, plainText) {
 // SELECTION TOOLBAR — appears when user highlights text in entries
 // ============================================================
 
+function toggleTaggingMode() {
+  taggingMode = !taggingMode;
+  const btn = document.getElementById('tagging-mode-btn');
+  if (btn) {
+    btn.classList.toggle('active', taggingMode);
+  }
+}
+
 function setupSelectionToolbar() {
   document.addEventListener('mouseup', (e) => {
     const toolbar = document.getElementById('selection-toolbar');
@@ -4050,12 +4237,25 @@ function setupSelectionToolbar() {
       entry: entry,
     };
 
-    // Position toolbar near selection
-    const range = sel.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    toolbar.style.left = Math.min(rect.left + rect.width / 2 - 60, window.innerWidth - 160) + 'px';
-    toolbar.style.top = (rect.top - 44) + 'px';
-    toolbar.classList.add('visible');
+    // Only show tag toolbar if tagging mode is enabled
+    if (taggingMode) {
+      // Position toolbar near selection
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      toolbar.style.left = Math.min(rect.left + rect.width / 2 - 60, window.innerWidth - 160) + 'px';
+      toolbar.style.top = (rect.top - 44) + 'px';
+      toolbar.classList.add('visible');
+    } else {
+      toolbar.classList.remove('visible');
+      // Subtle hint: pulse the tagging mode button so the user knows to enable it
+      const hintBtn = document.getElementById('tagging-mode-btn');
+      if (hintBtn && !hintBtn.classList.contains('active')) {
+        hintBtn.classList.remove('highlight-hint');
+        // Force reflow to restart animation
+        void hintBtn.offsetWidth;
+        hintBtn.classList.add('highlight-hint');
+      }
+    }
   });
 
   // Hide toolbar on click elsewhere
@@ -4439,23 +4639,64 @@ function downloadNotebookFile(nb, content) {
 // ============================================================
 
 function setupTagClicks() {
-  document.addEventListener('click', (e) => {
-    const tagEl = e.target.closest('[data-tag]');
-    if (!tagEl) return;
-
-    // If inside .entry-content, navigate to Tags page filtered to this tag
-    const entryContent = tagEl.closest('.entry-content');
-    if (entryContent) {
-      const tagName = tagEl.getAttribute('data-tag');
-      activeTagFilter = tagName;
-      navigate('tags');
-      renderTagsPage();
-    }
-  });
+  // Tag click navigation has been removed.
+  // Tags in entry content are now non-interactive on click.
+  // Use the arrow button in the inspector tag panel to view all entries for a tag.
 }
+
+// Navigate to the All Tags page filtered to a specific tag
+function gotoAllTagsFor(tagName) {
+  activeTagFilter = tagName;
+  navigate('tags');
+  renderTagsPage();
+}
+
+// ============================================================
+// ZOOM — Cmd/Ctrl +/- to scale the UI (desktop app only)
+// ============================================================
+
+const ZOOM_STEP = 0.1;
+const ZOOM_MIN  = 0.5;
+const ZOOM_MAX  = 2.0;
+const ZOOM_KEY  = 'ui-zoom-level';
+
+let zoomLevel = parseFloat(localStorage.getItem(ZOOM_KEY) || '1');
+
+function applyZoom() {
+  document.documentElement.style.transformOrigin = 'top left';
+  document.documentElement.style.transform = zoomLevel === 1 ? '' : `scale(${zoomLevel})`;
+  // Keep the scrollable area sized to the visual viewport so nothing gets clipped
+  document.documentElement.style.width  = zoomLevel === 1 ? '' : `${100 / zoomLevel}%`;
+  document.documentElement.style.height = zoomLevel === 1 ? '' : `${100 / zoomLevel}vh`;
+  localStorage.setItem(ZOOM_KEY, zoomLevel);
+}
+
+// Apply saved zoom on load
+applyZoom();
 
 // Keyboard navigation
 document.addEventListener('keydown', e => {
+  // Zoom shortcuts (Cmd on macOS, Ctrl elsewhere)
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && (e.key === '+' || e.key === '=' || e.key === 'NumpadAdd')) {
+    e.preventDefault();
+    zoomLevel = Math.min(ZOOM_MAX, parseFloat((zoomLevel + ZOOM_STEP).toFixed(2)));
+    applyZoom();
+    return;
+  }
+  if (mod && (e.key === '-' || e.key === 'NumpadSubtract')) {
+    e.preventDefault();
+    zoomLevel = Math.max(ZOOM_MIN, parseFloat((zoomLevel - ZOOM_STEP).toFixed(2)));
+    applyZoom();
+    return;
+  }
+  if (mod && e.key === '0') {
+    e.preventDefault();
+    zoomLevel = 1;
+    applyZoom();
+    return;
+  }
+
   if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
     const nbPage = currentPage.startsWith('notebook-') ? currentPage.replace('notebook-', '') : null;
     if (!nbPage) return;

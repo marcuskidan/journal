@@ -267,21 +267,87 @@ fn days_to_ymd(days: i64) -> (i32, u32, u32) {
     (y as i32, m, d)
 }
 
-/// Decode hex string → gunzip → protobuf → ANDocument.
+/// Try to decompress bytes using gzip, then zlib, then raw deflate.
+/// Returns decompressed bytes on success, or None if all methods fail.
+fn try_decompress(bytes: &[u8]) -> Option<Vec<u8>> {
+    // Strategy 1: Gzip (traditional Apple Notes format)
+    {
+        let mut decoder = GzDecoder::new(bytes);
+        let mut buf = Vec::new();
+        if decoder.read_to_end(&mut buf).is_ok() && !buf.is_empty() {
+            return Some(buf);
+        }
+    }
+
+    // Strategy 2: Zlib (deflate with zlib header — newer macOS may use this)
+    {
+        use flate2::read::ZlibDecoder;
+        let mut decoder = ZlibDecoder::new(bytes);
+        let mut buf = Vec::new();
+        if decoder.read_to_end(&mut buf).is_ok() && !buf.is_empty() {
+            return Some(buf);
+        }
+    }
+
+    // Strategy 3: Raw deflate (no header at all)
+    {
+        use flate2::read::DeflateDecoder;
+        let mut decoder = DeflateDecoder::new(bytes);
+        let mut buf = Vec::new();
+        if decoder.read_to_end(&mut buf).is_ok() && !buf.is_empty() {
+            return Some(buf);
+        }
+    }
+
+    None
+}
+
+/// Decode hex string → decompress → protobuf → ANDocument.
+/// Tries multiple decompression strategies and falls back to raw protobuf.
 fn decode_note_data(hexdata: &str) -> Result<ANDocument, String> {
     // Hex decode
     let bytes = hex_decode(hexdata)?;
 
-    // Gunzip
-    let mut decoder = GzDecoder::new(&bytes[..]);
-    let mut decompressed = Vec::new();
-    decoder
-        .read_to_end(&mut decompressed)
-        .map_err(|e| format!("Gunzip failed: {}", e))?;
+    // Strategy A: Decompress the full blob, then decode protobuf
+    if let Some(decompressed) = try_decompress(&bytes) {
+        if let Ok(doc) = ANDocument::decode(&decompressed[..]) {
+            return Ok(doc);
+        }
+    }
 
-    // Protobuf decode
-    ANDocument::decode(&decompressed[..])
-        .map_err(|e| format!("Protobuf decode failed: {}", e))
+    // Strategy B: Raw protobuf (no compression — some macOS versions store it this way)
+    if let Ok(doc) = ANDocument::decode(&bytes[..]) {
+        return Ok(doc);
+    }
+
+    // Strategy C: Skip potential header bytes (some blobs have a small envelope)
+    // Try skipping 2 or 4 bytes, then decompress + decode
+    for skip in [2usize, 4, 8] {
+        if bytes.len() > skip {
+            if let Some(decompressed) = try_decompress(&bytes[skip..]) {
+                if let Ok(doc) = ANDocument::decode(&decompressed[..]) {
+                    return Ok(doc);
+                }
+            }
+            // Also try raw protobuf after skipping
+            if let Ok(doc) = ANDocument::decode(&bytes[skip..]) {
+                return Ok(doc);
+            }
+        }
+    }
+
+    // Build a diagnostic message with the first few bytes for debugging
+    let preview_len = bytes.len().min(16);
+    let first_bytes: Vec<String> = bytes[..preview_len]
+        .iter()
+        .map(|b| format!("{:02X}", b))
+        .collect();
+    Err(format!(
+        "Could not decode note data ({} bytes). First bytes: [{}]. \
+         Tried gzip, zlib, raw deflate, raw protobuf, and header-skip variants.",
+        bytes.len(),
+        first_bytes.join(" ")
+    ))
 }
 
 fn hex_decode(hex: &str) -> Result<Vec<u8>, String> {
@@ -718,6 +784,7 @@ pub fn import_apple_notes(
     let mut skipped = 0usize;
     let mut duplicates = 0usize;
     let mut failed = 0usize;
+    let mut first_error: Option<String> = None;
 
     for row in &note_rows {
         let title = row["ZTITLE1"].as_str().unwrap_or("Untitled");
@@ -759,13 +826,21 @@ pub fn import_apple_notes(
                 match fs::write(&file_path, &markdown) {
                     Ok(_) => imported += 1,
                     Err(e) => {
-                        eprintln!("Failed to write {}: {}", filename, e);
+                        let err_msg = format!("Failed to write {}: {}", filename, e);
+                        eprintln!("{}", err_msg);
+                        if first_error.is_none() {
+                            first_error = Some(err_msg);
+                        }
                         failed += 1;
                     }
                 }
             }
             Err(e) => {
-                eprintln!("Failed to decode note '{}': {}", title, e);
+                let err_msg = format!("Failed to decode '{}': {}", title, e);
+                eprintln!("{}", err_msg);
+                if first_error.is_none() {
+                    first_error = Some(err_msg);
+                }
                 failed += 1;
             }
         }
@@ -781,11 +856,16 @@ pub fn import_apple_notes(
     if duplicates > 0 { parts.push(format!("{} already existed", duplicates)); }
     if skipped > 0 { parts.push(format!("{} empty", skipped)); }
     if failed > 0 { parts.push(format!("{} failed", failed)); }
-    let message = if parts.is_empty() {
+    let mut message = if parts.is_empty() {
         "No notes found.".to_string()
     } else {
         parts.join(", ")
     };
+
+    // Append the first error detail so the user can see what went wrong
+    if let Some(err) = first_error {
+        message.push_str(&format!(". Detail: {}", err));
+    }
 
     Ok(ImportResult {
         success: failed == 0,
