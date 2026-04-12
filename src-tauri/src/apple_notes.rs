@@ -789,7 +789,9 @@ pub fn import_apple_notes(
         let file_path = output_dir.join(&filename);
 
         // If file exists, check whether the note has been modified since the file was written.
-        // Overwrite only if the Apple Notes version is newer; otherwise skip as duplicate.
+        // Overwrite only if the Apple Notes version is newer; otherwise skip as unchanged.
+        // Before overwriting, back up the existing file to prevent data loss (e.g. if
+        // the note was accidentally cleared on the phone).
         let is_update = if file_path.exists() {
             let file_mod_ms = fs::metadata(&file_path)
                 .and_then(|m| m.modified())
@@ -800,7 +802,10 @@ pub fn import_apple_notes(
                 })
                 .unwrap_or(0);
             if note_mod_ms > file_mod_ms {
-                true // note is newer → overwrite
+                // Back up existing file before overwriting
+                let backup_path = output_dir.join(format!("{}{}.backup.md", date_prefix, safe_title));
+                let _ = fs::copy(&file_path, &backup_path);
+                true // note is newer → overwrite (backup saved)
             } else {
                 duplicates += 1;
                 continue; // file is up-to-date
@@ -853,8 +858,9 @@ pub fn import_apple_notes(
     let _ = fs::remove_file(db_path.with_extension("sqlite-wal"));
 
     let mut parts = Vec::new();
-    if imported > 0 { parts.push(format!("Imported {}", imported)); }
-    if duplicates > 0 { parts.push(format!("{} already existed", duplicates)); }
+    if imported > 0 { parts.push(format!("{} imported", imported)); }
+    if updated > 0 { parts.push(format!("{} updated", updated)); }
+    if duplicates > 0 { parts.push(format!("{} unchanged", duplicates)); }
     if skipped > 0 { parts.push(format!("{} empty", skipped)); }
     if failed > 0 { parts.push(format!("{} failed", failed)); }
     let mut message = if parts.is_empty() {
@@ -872,6 +878,7 @@ pub fn import_apple_notes(
         success: failed == 0,
         message,
         imported,
+        updated,
         skipped,
         duplicates,
         failed,

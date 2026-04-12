@@ -2175,6 +2175,11 @@
       <div class="settings-section" id="apple-notes-section" style="border-left: 3px solid var(--orange); border-color: var(--orange);">
         <h2>Import from Apple Notes</h2>
         <p id="apple-notes-description">Import notes directly from Apple Notes into a directory notebook. Each note becomes its own <code>.md</code> file with a date prefix, automatically organized as a notebook.</p>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-top:6px;">
+          <strong>&#128274; Imported notebooks are read-only.</strong>
+          The notebook matching the name below is treated as a synced mirror of Apple Notes &mdash; re-importing will update changed notes (with backups kept).
+          To tag or edit an entry, use <strong>Copy to notebook</strong> to move it into one of your regular notebooks.
+        </p>
 
         <div id="apple-notes-unavailable" style="display: none;">
           <p style="opacity: 0.6; font-style: italic;">Apple Notes import is only available in the macOS desktop app.</p>
@@ -2419,6 +2424,11 @@ git push origin v0.2.0</code></pre>
 // Any .md file inside entries/ becomes a notebook automatically.
 // No registration needed — just drop a file in the folder.
 let NOTEBOOKS = [];
+/** Returns the current Apple Notes import target name (used to auto-detect read-only notebooks). */
+function getImportNotebookName() {
+  const el = document.getElementById('import-notebook-name');
+  return (el ? el.value.trim() : '') || 'apple-notes';
+}
 
 // Icon palette — cycles through these for discovered notebooks
 const NB_ICONS = [
@@ -2572,6 +2582,7 @@ async function discoverNotebooks() {
             name: notebookNameFromFilename(dirName),
             absDir: rootFolder + '/entries/' + dirName,
             type: 'directory',
+            readonly: dirName === getImportNotebookName(),
             entryFiles: entryFiles.map(f => ({
               name: f,
               absPath: rootFolder + '/entries/' + dirName + '/' + f,
@@ -2629,6 +2640,7 @@ async function discoverNotebooks() {
                 file: `entries/${entry.name}`,
                 name: notebookNameFromFilename(entry.name),
                 type: 'directory',
+                readonly: entry.name === getImportNotebookName(),
                 entryFiles,
                 dirName: entry.name,
               });
@@ -3217,10 +3229,11 @@ function renderNav() {
   const container = document.getElementById('nav-notebooks');
   container.innerHTML = NOTEBOOKS.map(nb => {
     const count = (notebookEntries[nb.id] || []).length;
+    const lockIcon = nb.readonly ? ' <span title="Imported (read-only)" style="font-size:10px;opacity:0.5;">&#128274;</span>' : '';
     return `
       <div class="nav-item" id="nav-notebook-${nb.id}" data-page="notebook-${nb.id}" onclick="navigate('notebook-${nb.id}')">
         <span class="nav-icon">${nb.icon}</span>
-        <span class="nav-label">${nb.name}</span>
+        <span class="nav-label">${nb.name}${lockIcon}</span>
         <span class="nav-badge">${count}</span>
       </div>
     `;
@@ -3351,8 +3364,12 @@ function renderThumbnails(notebookId, filterText) {
     // Find original index in the full (unfiltered) array
     const origIndex = (notebookEntries[notebookId] || []).indexOf(entry);
 
+    const ctxHandler = isNotebookReadonly(notebookId)
+      ? `oncontextmenu="showThumbContextMenu(event, '${notebookId}', ${origIndex})"`
+      : '';
+
     html += `
-      <div class="thumb-item ${origIndex === selected ? 'active' : ''}" onclick="selectEntry('${notebookId}', ${origIndex})" data-entry-index="${origIndex}">
+      <div class="thumb-item ${origIndex === selected ? 'active' : ''}" onclick="selectEntry('${notebookId}', ${origIndex})" ${ctxHandler} data-entry-index="${origIndex}">
         <div class="thumb-date">${formatShortDate(entry.dateObj)}</div>
         <div class="thumb-preview">${escapeHtml(entry.preview.substring(0, 80))}</div>
       </div>
@@ -3378,6 +3395,11 @@ function selectEntry(notebookId, index) {
   renderDetailPanel(notebookId, index);
 }
 
+function isNotebookReadonly(notebookId) {
+  const nb = NOTEBOOKS.find(n => n.id === notebookId);
+  return nb ? !!nb.readonly : false;
+}
+
 function renderDetailPanel(notebookId, index) {
   const entries = notebookEntries[notebookId] || [];
   const entry = entries[index];
@@ -3386,8 +3408,18 @@ function renderDetailPanel(notebookId, index) {
   const panel = document.getElementById(`detail-panel-${notebookId}`);
   const prevIdx = index > 0 ? index - 1 : null;
   const nextIdx = index < entries.length - 1 ? index + 1 : null;
+  const readonly = isNotebookReadonly(notebookId);
+
+  const readonlyBanner = readonly ? `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:8px;background:var(--blue-bg,#e8f0fe);border:1px solid var(--blue-border,#c5d8f0);border-radius:8px;font-size:12px;color:var(--blue,#3b78c4);">
+      <span style="font-size:14px;">&#128274;</span>
+      <span>Imported from Apple Notes — read-only. Use <strong>Copy to notebook</strong> to tag or edit.</span>
+      <button onclick="showCopyToNotebookDialog('${notebookId}', ${index})" style="margin-left:auto;padding:4px 10px;border:1px solid var(--blue-border,#c5d8f0);background:white;border-radius:6px;cursor:pointer;font-size:12px;color:var(--blue,#3b78c4);white-space:nowrap;">Copy to notebook</button>
+    </div>
+  ` : '';
 
   panel.innerHTML = `
+    ${readonlyBanner}
     <div class="entry-header">
       <div>
         <div class="entry-date">${entry.date}</div>
@@ -3574,29 +3606,38 @@ function updateInspector(notebookId, entryIndex) {
 
   // ── Entry card ──
   const entryFields = document.getElementById('inspector-entry-fields');
+  const readonly = isNotebookReadonly(notebookId);
   if (entryFields) {
     const firstLine = entry.body.split('\n').find(l => l.trim()) || '';
     const title = firstLine.replace(/^#+\s*/, '').replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '').substring(0, 120);
 
-    entryFields.innerHTML = `
-      <div class="inspector-field">
-        <label class="inspector-label">Date</label>
-        <div class="inspector-editable" id="inspector-entry-date-display">
+    const dateField = readonly
+      ? `<div class="inspector-editable"><span class="inspector-editable-value">${entry.date}</span></div>`
+      : `<div class="inspector-editable" id="inspector-entry-date-display">
           <span class="inspector-editable-value">${entry.date}</span>
           <button class="inspector-edit-btn" onclick="startEditField('entry-date')" title="Edit date">&#9998;</button>
         </div>
-        <input class="inspector-input" id="inspector-entry-date-input" style="display:none" onblur="commitEditField('entry-date')" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelEditField('entry-date')">
+        <input class="inspector-input" id="inspector-entry-date-input" style="display:none" onblur="commitEditField('entry-date')" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelEditField('entry-date')">`;
+
+    entryFields.innerHTML = `
+      ${readonly ? `<div class="inspector-field"><label class="inspector-label">Source</label><div style="font-size:12px;color:var(--text-secondary);">&#128274; Apple Notes (read-only)</div></div>` : ''}
+      <div class="inspector-field">
+        <label class="inspector-label">Date</label>
+        ${dateField}
       </div>
       <div class="inspector-field">
         <label class="inspector-label">First line</label>
         <div style="font-size:12px;color:var(--text-secondary);line-height:1.4;word-break:break-word;">${escapeHtml(title) || '<em style=color:var(--text-tertiary)>Empty entry</em>'}</div>
       </div>
+      ${readonly ? `<div class="inspector-field"><button onclick="showCopyToNotebookDialog('${notebookId}', ${entryIndex})" style="width:100%;padding:6px 12px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;font-size:12px;">Copy to notebook&hellip;</button></div>` : ''}
     `;
   }
 
   // ── Tags card ──
   const tagsList = document.getElementById('inspector-tags');
-  if (tagsList) {
+  if (tagsList && readonly) {
+    tagsList.innerHTML = '<div class="inspector-tag-empty">Tags are disabled for imported notes.<br>Copy to a notebook to enable tagging.</div>';
+  } else if (tagsList) {
     const tagCounts = {};
     const tagRe = /<span\s+data-tag="([^"]+)">/g;
     let m;
@@ -4866,16 +4907,20 @@ async function runAppleNotesImport() {
 
     resultEl.style.display = 'block';
 
-    if (result.imported > 0) {
-      resultEl.className = 'import-result success';
-      let msg = `Imported <strong>${result.imported}</strong> note${result.imported !== 1 ? 's' : ''}`;
-      if (result.duplicates > 0) msg += `, ${result.duplicates} already existed`;
-      if (result.skipped > 0) msg += `, ${result.skipped} empty`;
-      if (result.failed > 0) msg += `, <strong>${result.failed} failed</strong>`;
-      msg += ` into <code>entries/${escapeHtml(result.notebook_name)}/</code>`;
-      resultEl.innerHTML = msg;
+    const hasChanges = result.imported > 0 || result.updated > 0;
 
-      showToast(`Imported ${result.imported} notes! Reloading...`);
+    if (hasChanges) {
+      resultEl.className = 'import-result success';
+      let msgParts = [];
+      if (result.imported > 0) msgParts.push(`<strong>${result.imported}</strong> imported`);
+      if (result.updated > 0) msgParts.push(`<strong>${result.updated}</strong> updated`);
+      if (result.duplicates > 0) msgParts.push(`${result.duplicates} unchanged`);
+      if (result.skipped > 0) msgParts.push(`${result.skipped} empty`);
+      if (result.failed > 0) msgParts.push(`<strong>${result.failed} failed</strong>`);
+      resultEl.innerHTML = msgParts.join(', ') + ` into <code>entries/${escapeHtml(result.notebook_name)}/</code>`;
+
+      const totalChanged = result.imported + result.updated;
+      showToast(`${result.imported > 0 ? `Imported ${result.imported}` : ''}${result.imported > 0 && result.updated > 0 ? ', ' : ''}${result.updated > 0 ? `Updated ${result.updated}` : ''} notes! Reloading...`);
 
       // Reload notebooks to pick up the new directory notebook
       setTimeout(async () => {
@@ -4888,7 +4933,7 @@ async function runAppleNotesImport() {
       resultEl.style.border = '1px solid var(--blue-border)';
       resultEl.style.color = 'var(--blue)';
       let parts = [];
-      if (result.duplicates > 0) parts.push(`${result.duplicates} already imported`);
+      if (result.duplicates > 0) parts.push(`${result.duplicates} unchanged`);
       if (result.skipped > 0) parts.push(`${result.skipped} empty`);
       resultEl.textContent = `No new notes — ${parts.join(', ')}. Safe to re-sync anytime.`;
     } else {
@@ -4903,6 +4948,139 @@ async function runAppleNotesImport() {
     btn.classList.remove('loading');
     btn.disabled = false;
   }
+}
+
+// ============================================================
+// COPY TO NOTEBOOK (for read-only imported entries)
+// ============================================================
+
+function showCopyToNotebookDialog(sourceNotebookId, entryIndex) {
+  const entry = (notebookEntries[sourceNotebookId] || [])[entryIndex];
+  if (!entry) return;
+
+  // Get writable file-based notebooks as targets
+  const targets = NOTEBOOKS.filter(nb => nb.type === 'file' && !nb.readonly);
+
+  if (targets.length === 0) {
+    showToast('No writable notebooks found. Create a notebook first.');
+    return;
+  }
+
+  // Build a small modal dialog
+  const overlay = document.createElement('div');
+  overlay.id = 'copy-dialog-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  const firstLine = entry.body.split('\n').find(l => l.trim()) || 'Untitled';
+  const title = firstLine.replace(/^#+\s*/, '').replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '').substring(0, 80);
+
+  overlay.innerHTML = `
+    <div style="background:var(--card-bg,white);border-radius:12px;padding:20px;width:340px;max-width:90vw;box-shadow:0 8px 30px rgba(0,0,0,0.2);font-family:inherit;">
+      <div style="font-weight:600;font-size:15px;margin-bottom:4px;">Copy to notebook</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.4;">
+        "${escapeHtml(title)}"
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;">
+        ${targets.map(nb => `
+          <button class="copy-target-btn" data-target-id="${nb.id}"
+            style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);background:var(--bg);border-radius:8px;cursor:pointer;font-size:13px;text-align:left;">
+            <span>${nb.icon}</span>
+            <span>${escapeHtml(nb.name)}</span>
+          </button>
+        `).join('')}
+      </div>
+      <button onclick="this.closest('#copy-dialog-overlay').remove()"
+        style="margin-top:14px;width:100%;padding:6px;border:1px solid var(--border);background:transparent;border-radius:6px;cursor:pointer;font-size:12px;color:var(--text-secondary);">Cancel</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Close on backdrop click
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  // Handle target selection
+  overlay.querySelectorAll('.copy-target-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const targetId = btn.dataset.targetId;
+      await copyEntryToNotebook(entry, targetId);
+      overlay.remove();
+    });
+  });
+}
+
+async function copyEntryToNotebook(entry, targetNotebookId) {
+  const targetNb = NOTEBOOKS.find(n => n.id === targetNotebookId);
+  if (!targetNb) return;
+
+  // Build the entry text with date heading and body
+  const entryText = `\n---\n\n## ${entry.date}\n\n${entry.body}\n`;
+
+  if (IS_TAURI && targetNb.absPath) {
+    try {
+      // Read existing content, append the new entry
+      let existing = '';
+      try { existing = await tauriInvoke('read_file', { path: targetNb.absPath }); } catch (e) {}
+      const newContent = existing.trimEnd() + '\n' + entryText;
+      await tauriInvoke('write_file', { path: targetNb.absPath, content: newContent });
+      showToast(`Copied to "${targetNb.name}"!`);
+      await reload();
+    } catch (e) {
+      showToast('Copy failed: ' + e);
+    }
+  } else if (dirHandle) {
+    try {
+      const pathParts = targetNb.file.split('/');
+      let current = dirHandle;
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        current = await current.getDirectoryHandle(pathParts[i]);
+      }
+      const fileHandle = await current.getFileHandle(pathParts[pathParts.length - 1], { create: false });
+      const file = await fileHandle.getFile();
+      const existing = await file.text();
+      const newContent = existing.trimEnd() + '\n' + entryText;
+      const writable = await fileHandle.createWritable();
+      await writable.write(newContent);
+      await writable.close();
+      showToast(`Copied to "${targetNb.name}"!`);
+      await reload();
+    } catch (e) {
+      showToast('Copy failed: ' + e);
+    }
+  }
+}
+
+// ── Context menu for thumbnails ──
+
+let _contextMenu = null;
+
+function showThumbContextMenu(e, notebookId, entryIndex) {
+  e.preventDefault();
+  removeContextMenu();
+
+  if (!isNotebookReadonly(notebookId)) return; // only for read-only entries
+
+  const menu = document.createElement('div');
+  menu.id = 'thumb-context-menu';
+  menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;background:var(--card-bg,white);border:1px solid var(--border);border-radius:8px;padding:4px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;min-width:160px;`;
+  menu.innerHTML = `
+    <button onmousedown="showCopyToNotebookDialog('${notebookId}', ${entryIndex});removeContextMenu();"
+      style="display:block;width:100%;padding:8px 12px;border:none;background:none;border-radius:6px;cursor:pointer;font-size:13px;text-align:left;"
+      onmouseover="this.style.background='var(--hover-bg,#f0f0f0)'"
+      onmouseout="this.style.background='none'">
+      Copy to notebook&hellip;
+    </button>
+  `;
+
+  document.body.appendChild(menu);
+  _contextMenu = menu;
+
+  // Dismiss on next click anywhere
+  setTimeout(() => document.addEventListener('click', removeContextMenu, { once: true }), 0);
+}
+
+function removeContextMenu() {
+  if (_contextMenu) { _contextMenu.remove(); _contextMenu = null; }
 }
 
 // ============================================================

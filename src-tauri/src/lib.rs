@@ -252,6 +252,7 @@ fn get_github_repo() -> Option<String> {
     load_config().github_repo
 }
 
+
 /// Simple semver comparison: returns true if `a` > `b`.
 fn version_gt(a: &str, b: &str) -> bool {
     let parse = |v: &str| -> Vec<u32> {
