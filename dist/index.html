@@ -38,6 +38,7 @@
     --orange: #d98c47;
     --orange-bg: #faf4ed;
     --orange-border: #e5d2b8;
+    --tag-flash-bg: rgba(196, 121, 90, 0.25);
     --shadow-sm: none;
     --shadow: 0 1px 2px rgba(26,25,24,0.03);
     --shadow-md: 0 2px 4px rgba(26,25,24,0.04);
@@ -72,6 +73,7 @@
     --purple-bg: #2e2218;
     --orange-bg: #24201a;
     --orange-border: #4a3820;
+    --tag-flash-bg: rgba(196, 121, 90, 0.3);
     --shadow-sm: none;
     --shadow: 0 1px 2px rgba(0,0,0,0.15);
     --shadow-md: 0 2px 4px rgba(0,0,0,0.2);
@@ -268,6 +270,9 @@
     padding: 32px 48px;
     max-width: 1200px;
   }
+  .main.has-inspector {
+    max-width: calc(1200px + 260px);
+  }
 
   .page { display: none; }
   .page.active { display: block; animation: pageFadeIn 0.25s ease-out; }
@@ -446,16 +451,26 @@
   .detail-panel::-webkit-scrollbar-track { background: transparent; }
   .detail-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-  /* ── Floating inspector cards (right of main) ── */
+  /* ── Notebook content wrapper (slideshow + inspector side-by-side) ── */
+  .notebook-content-wrapper {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .notebook-content-wrapper .slideshow-layout {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* ── Inspector cards (right side, outside slideshow box) ── */
   .inspector-cards {
-    position: fixed;
-    right: 24px;
-    top: 32px;
     width: 240px;
+    min-width: 240px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    z-index: 5;
+    position: sticky;
+    top: 32px;
     max-height: calc(100vh - 64px);
     overflow-y: auto;
     scrollbar-width: none;
@@ -833,10 +848,12 @@
     transition: background 0.4s, outline 0.4s;
   }
 
-  /* Soft highlight when hovering a tag name in the inspector */
+  /* Highlight when hovering a tag name in the inspector */
   .entry-content [data-tag].tag-flash {
-    background: var(--purple-bg);
+    background: var(--tag-flash-bg);
+    box-shadow: 0 0 0 2px var(--tag-flash-bg);
     border-radius: 3px;
+    transition: background 0.15s, box-shadow 0.15s;
   }
 
   /* Stronger "you are here" highlight for the current arrow-navigated occurrence */
@@ -1999,6 +2016,7 @@
     .thumb-month-header { display: none; }
     .detail-panel { padding: 16px; }
     .inspector-cards { display: none !important; }
+    .main.has-inspector { max-width: 1200px; }
   }
 
   @media (max-width: 768px) {
@@ -3143,12 +3161,14 @@ function renderNotebookPages() {
         <input class="search-input" id="search-${nb.id}" type="text" placeholder="Search this notebook..." oninput="filterNotebook('${nb.id}')">
       </div>
 
-      <div class="slideshow-layout">
-        <div class="thumb-panel" id="thumb-panel-${nb.id}"></div>
-        <div class="detail-panel" id="detail-panel-${nb.id}">
-          <div class="detail-panel-empty">
-            <div class="empty-icon">&#128196;</div>
-            Select an entry to view
+      <div class="notebook-content-wrapper" id="nb-wrapper-${nb.id}">
+        <div class="slideshow-layout" id="slideshow-${nb.id}">
+          <div class="thumb-panel" id="thumb-panel-${nb.id}"></div>
+          <div class="detail-panel" id="detail-panel-${nb.id}">
+            <div class="detail-panel-empty">
+              <div class="empty-icon">&#128196;</div>
+              Select an entry to view
+            </div>
           </div>
         </div>
       </div>
@@ -3257,10 +3277,19 @@ let _inspectorNotebookId = null;
 let _inspectorEntryIndex = null;
 
 function showInspectorCards() {
-  document.getElementById('inspector-cards').classList.remove('hidden');
+  const cards = document.getElementById('inspector-cards');
+  if (_inspectorNotebookId) {
+    const wrapper = document.getElementById('nb-wrapper-' + _inspectorNotebookId);
+    if (wrapper && cards.parentElement !== wrapper) {
+      wrapper.appendChild(cards);
+    }
+  }
+  cards.classList.remove('hidden');
+  document.querySelector('.main').classList.add('has-inspector');
 }
 function hideInspectorCards() {
   document.getElementById('inspector-cards').classList.add('hidden');
+  document.querySelector('.main').classList.remove('has-inspector');
 }
 
 function renderInspectorIcons(notebookId, currentIcon) {
@@ -3596,6 +3625,16 @@ function navigate(page) {
 
   // Show/hide inspector cards based on whether we're on a notebook page
   if (page.startsWith('notebook-')) {
+    const nbId = page.replace('notebook-', '');
+    _inspectorNotebookId = nbId;
+    // Find the currently active entry for this notebook and refresh the inspector
+    const activeThumb = document.querySelector(`#thumb-panel-${nbId} .thumb-item.active`);
+    if (activeThumb) {
+      const entryIndex = parseInt(activeThumb.getAttribute('data-entry-index'), 10);
+      if (!isNaN(entryIndex)) {
+        updateInspector(nbId, entryIndex);
+      }
+    }
     showInspectorCards();
   } else {
     hideInspectorCards();
