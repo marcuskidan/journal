@@ -2933,6 +2933,24 @@ async function tauriInvoke(cmd, args) {
   return window.__TAURI_INTERNALS__.invoke(cmd, args);
 }
 
+// ── Tauri plugin-fs helpers ──
+// These use the built-in fs plugin (ships with every Tauri build) rather than
+// custom Rust commands, so they work with any version of the backend binary.
+async function tauriReadDir(path) {
+  return window.__TAURI_INTERNALS__.invoke('plugin:fs|read_dir', { path });
+}
+async function tauriReadTextFile(path) {
+  // plugin:fs|read_text_file returns binary data (ArrayBuffer or number[]), not a string
+  const arr = await window.__TAURI_INTERNALS__.invoke('plugin:fs|read_text_file', { path });
+  const bytes = arr instanceof ArrayBuffer ? arr : Uint8Array.from(arr);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+async function tauriExists(path) {
+  return window.__TAURI_INTERNALS__.invoke('plugin:fs|exists', { path });
+}
+// Note: plugin-fs write_text_file uses a binary IPC format that can't be called
+// via simple invoke. We keep using the custom Rust write_file command for writes.
+
 // For the folder picker dialog, Tauri v2 plugin-dialog exposes
 // a JS command we invoke through the standard invoke bridge.
 async function tauriPickFolder() {
@@ -2969,39 +2987,51 @@ async function discoverNotebooks() {
   let fileNotebooks = [];
   let dirNotebooks = [];
 
-  // ── Tauri path: use Rust commands for native filesystem access ──
+  // ── Tauri path: use built-in plugin-fs for filesystem access ──
+  // This works with ANY version of the Tauri binary — no custom Rust commands needed.
   if (IS_TAURI && rootFolder) {
     try {
-      // Discover single-file notebooks
-      const foundFiles = await tauriInvoke('list_notebooks', { root: rootFolder });
-      fileNotebooks = foundFiles.map(name => ({
-        id: notebookIdFromFilename(name),
-        file: `entries/${name}`,
-        name: notebookNameFromFilename(name),
-        absPath: rootFolder + '/entries/' + name,
-        type: 'file',
-      }));
+      const entriesPath = rootFolder + '/entries';
+      const dirEntries = await tauriReadDir(entriesPath);
 
-      // Discover directory-based notebooks
-      try {
-        const foundDirs = await tauriInvoke('list_notebook_dirs', { root: rootFolder });
-        for (const dirName of foundDirs) {
-          const entryFiles = await tauriInvoke('list_dir_entries', { root: rootFolder, dir_name: dirName });
-          dirNotebooks.push({
-            id: 'dir-' + notebookIdFromFilename(dirName),
-            file: `entries/${dirName}`,
-            name: notebookNameFromFilename(dirName),
-            absDir: rootFolder + '/entries/' + dirName,
-            type: 'directory',
-            readonly: dirName === getImportNotebookName(),
-            entryFiles: entryFiles.map(f => ({
-              name: f,
-              absPath: rootFolder + '/entries/' + dirName + '/' + f,
-            })),
+      for (const entry of dirEntries) {
+        if (entry.isFile && entry.name.endsWith('.md')
+            && entry.name !== 'SCHEMA.md' && entry.name !== 'SYSTEM.md') {
+          // Single-file notebook
+          fileNotebooks.push({
+            id: notebookIdFromFilename(entry.name),
+            file: `entries/${entry.name}`,
+            name: notebookNameFromFilename(entry.name),
+            absPath: entriesPath + '/' + entry.name,
+            type: 'file',
           });
+        } else if (entry.isDirectory && !entry.name.startsWith('.')) {
+          // Potential directory notebook — check for .md files inside
+          try {
+            const subPath = entriesPath + '/' + entry.name;
+            const subEntries = await tauriReadDir(subPath);
+            const mdFiles = subEntries.filter(f =>
+              f.isFile && f.name.endsWith('.md') && !f.name.endsWith('.backup.md')
+            );
+            if (mdFiles.length > 0) {
+              dirNotebooks.push({
+                id: 'dir-' + notebookIdFromFilename(entry.name),
+                file: `entries/${entry.name}`,
+                name: notebookNameFromFilename(entry.name),
+                absDir: subPath,
+                dirName: entry.name,
+                type: 'directory',
+                readonly: entry.name === getImportNotebookName(),
+                entryFiles: mdFiles.map(f => ({
+                  name: f.name,
+                  absPath: subPath + '/' + f.name,
+                })),
+              });
+            }
+          } catch (e) {
+            console.info(`Skipping inaccessible directory "${entry.name}":`, e);
+          }
         }
-      } catch (e) {
-        console.info('Directory notebook discovery failed:', e);
       }
 
       const all = [...fileNotebooks, ...dirNotebooks];
@@ -3011,7 +3041,7 @@ async function discoverNotebooks() {
         return;
       }
     } catch (e) {
-      console.info('Tauri discovery failed:', e);
+      console.error('[discover] Tauri plugin-fs discovery failed:', e);
     }
   }
 
@@ -3528,10 +3558,10 @@ async function loadNotebooks() {
 
       // ── Single-file notebook (existing behavior) ──
 
-      // Tauri: read file via Rust command
+      // Tauri: read file via built-in plugin-fs
       if (IS_TAURI && nb.absPath) {
         try {
-          const text = await tauriInvoke('read_file', { path: nb.absPath });
+          const text = await tauriReadTextFile(nb.absPath);
           return { notebook: nb, text, type: 'file' };
         } catch (e) {
           console.info(`Tauri read failed for "${nb.name}":`, e);
@@ -3578,7 +3608,9 @@ async function loadNotebooks() {
 
       if (val.type === 'directory') {
         // Directory notebook: files already loaded, parse them
+        console.info(`[parse] Parsing ${val.files.length} files for dir notebook "${nb.name}" (id=${nb.id})`);
         const entries = parseDirectoryNotebook(val.files, nb.id, nb.name);
+        console.info(`[parse] Got ${entries.length} entries for "${nb.name}"`);
         notebookEntries[nb.id] = entries;
         allEntries.push(...entries);
         // Store per-file raw texts for tag rewriting
@@ -3619,10 +3651,10 @@ async function loadDirectoryNotebook(nb) {
   const files = [];
 
   if (IS_TAURI && nb.absDir) {
-    // Tauri: read each file via Rust command
+    // Tauri: read each file via built-in plugin-fs (works with any binary version)
     for (const ef of nb.entryFiles) {
       try {
-        const text = await tauriInvoke('read_file', { path: ef.absPath });
+        const text = await tauriReadTextFile(ef.absPath);
         files.push({ name: ef.name, text });
       } catch (e) {
         console.info(`Failed to read ${ef.name} in dir notebook "${nb.name}":`, e);
@@ -3653,12 +3685,14 @@ async function loadDirectoryNotebook(nb) {
   if (nb.readonly) {
     if (IS_TAURI && nb.absDir) {
       try {
-        const dirName = nb.absDir.split('/entries/')[1] || nb.dirName;
-        const rootFolder = nb.absDir.replace('/entries/' + dirName, '');
-        const backupNames = await tauriInvoke('list_dir_backups', { root: rootFolder, dir_name: dirName });
+        const dirEntries = await tauriReadDir(nb.absDir);
+        const backupNames = dirEntries
+          .filter(f => f.isFile && f.name.endsWith('.backup.md'))
+          .map(f => f.name)
+          .sort();
         for (const bName of backupNames) {
           try {
-            const text = await tauriInvoke('read_file', { path: nb.absDir + '/' + bName });
+            const text = await tauriReadTextFile(nb.absDir + '/' + bName);
             backupFiles.push({ name: bName, text });
           } catch (e) { /* skip unreadable backups */ }
         }
@@ -4621,7 +4655,7 @@ function updateEntryDate(newDate) {
       `# ${newDate}`
     );
     if (IS_TAURI && nb.absPath) {
-      tauriInvoke('write_file', { path: nb.absPath, contents: rawNotebookTexts[_inspectorNotebookId] });
+      tauriInvoke('write_file', { path: nb.absPath, content: rawNotebookTexts[_inspectorNotebookId] });
     }
   }
 }
@@ -5761,7 +5795,7 @@ async function connectFolder() {
         return false;
       }
       // Validate it has an entries/ subfolder
-      const valid = await tauriInvoke('validate_folder', { path: selected });
+      const valid = await tauriExists(selected + '/entries');
       if (!valid) {
         showToast('That folder doesn\'t contain an entries/ directory. Select the project root folder.');
         return false;
@@ -5875,7 +5909,7 @@ async function writeNotebookFile(notebookId, content, sourceFile) {
     if (IS_TAURI && nb.absDir) {
       try {
         const filePath = nb.absDir + '/' + sourceFile;
-        await tauriInvoke('write_file', { path: filePath, content: content });
+        await tauriInvoke('write_file', { path: filePath, content });
         return true;
       } catch (e) {
         console.warn('Tauri dir file write failed:', e);
@@ -5902,7 +5936,7 @@ async function writeNotebookFile(notebookId, content, sourceFile) {
   // Tauri: direct filesystem write
   if (IS_TAURI && nb.absPath) {
     try {
-      await tauriInvoke('write_file', { path: nb.absPath, content: content });
+      await tauriInvoke('write_file', { path: nb.absPath, content });
       return true;
     } catch (e) {
       console.warn('Tauri file write failed:', e);
@@ -6337,7 +6371,7 @@ async function copyEntryToNotebook(entry, targetNotebookId) {
     try {
       // Read existing content, append the new entry
       let existing = '';
-      try { existing = await tauriInvoke('read_file', { path: targetNb.absPath }); } catch (e) {}
+      try { existing = await tauriReadTextFile(targetNb.absPath); } catch (e) {}
       const newContent = existing.trimEnd() + '\n' + entryText;
       await tauriInvoke('write_file', { path: targetNb.absPath, content: newContent });
       showToast(`Copied to "${targetNb.name}"!`);
@@ -6451,7 +6485,7 @@ async function init() {
     try {
       const saved = await tauriInvoke('get_saved_folder');
       if (saved) {
-        const valid = await tauriInvoke('validate_folder', { path: saved });
+        const valid = await tauriExists(saved + '/entries');
         if (valid) {
           rootFolder = saved;
           updateFolderStatus(true);
@@ -6464,6 +6498,8 @@ async function init() {
       console.info('Could not restore saved folder:', e);
     }
   }
+
+  console.info(`[init] IS_TAURI=${IS_TAURI}, rootFolder=${rootFolder}`);
 
   // Update section: load version + saved repo, or disable in browser mode
   await initUpdateSection();
