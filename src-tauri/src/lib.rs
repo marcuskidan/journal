@@ -129,7 +129,32 @@ fn list_dir_entries(root: String, dir_name: String) -> Result<Vec<String>, Strin
         .filter_map(|entry| {
             let entry = entry.ok()?;
             let name = entry.file_name().to_string_lossy().to_string();
-            if name.ends_with(".md") {
+            if name.ends_with(".md") && !name.ends_with(".backup.md") {
+                Some(name)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    files.sort();
+    Ok(files)
+}
+
+/// Lists .backup.md files inside entries/<dir_name>/.
+#[tauri::command]
+fn list_dir_backups(root: String, dir_name: String) -> Result<Vec<String>, String> {
+    let dir_path = Path::new(&root).join("entries").join(&dir_name);
+    if !dir_path.is_dir() {
+        return Ok(vec![]);
+    }
+
+    let mut files: Vec<String> = fs::read_dir(&dir_path)
+        .map_err(|e| e.to_string())?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name.ends_with(".backup.md") {
                 Some(name)
             } else {
                 None
@@ -297,6 +322,7 @@ pub fn run() {
             list_notebooks,
             list_notebook_dirs,
             list_dir_entries,
+            list_dir_backups,
             read_file,
             write_file,
             validate_folder,

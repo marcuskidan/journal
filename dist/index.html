@@ -1537,6 +1537,158 @@
 
   .search-input::placeholder { color: var(--text-tertiary); }
 
+  /* ── Universal search-header: icon + line, compact expandable search box ── */
+  .search-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 0 10px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .search-header-icon {
+    font-size: 14px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .search-header-icon:hover { background: var(--bg-hover); color: var(--text); }
+  .search-header-right {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+  /* Compact search box — hidden by default, shown when .open */
+  .search-header-input-wrap {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px 10px;
+    width: 220px;
+    max-width: 50%;
+    transition: border-color 0.15s;
+  }
+  .search-header-input-wrap.open { display: flex; }
+  .search-header-input-wrap:focus-within { border-color: var(--text-tertiary); }
+  .search-header-input-wrap input {
+    flex: 1;
+    border: none;
+    background: none;
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+    min-width: 0;
+  }
+  .search-header-input-wrap input::placeholder { color: var(--text-tertiary); }
+  .search-header-close {
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    line-height: 1;
+    padding: 1px 2px;
+    border-radius: 4px;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+  .search-header-close:hover { color: var(--text); }
+
+  /* ── Tag page inline search bar (inside tag detail) ── */
+  .tag-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    margin-bottom: 14px;
+    transition: border-color 0.15s;
+  }
+  .tag-search-bar:focus-within { border-color: var(--text-tertiary); }
+  .tag-search-bar .search-icon { color: var(--text-tertiary); font-size: 13px; flex-shrink: 0; }
+  .tag-search-bar input {
+    flex: 1;
+    border: none;
+    background: none;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+  }
+  .tag-search-bar input::placeholder { color: var(--text-tertiary); }
+
+  /* ── Highlight flash for scroll-to-text (tags) ── */
+  @keyframes tagHighlightFlash {
+    0%   { background: var(--accent-light); outline: 2px solid var(--accent); outline-offset: 2px; }
+    70%  { background: var(--accent-light); outline: 2px solid var(--accent); outline-offset: 2px; }
+    100% { background: transparent; outline: 2px solid transparent; outline-offset: 2px; }
+  }
+  .tag-highlight-flash {
+    animation: tagHighlightFlash 2s ease-out forwards;
+    border-radius: 3px;
+    scroll-margin-top: 80px;
+  }
+
+  /* ── Find-in-entry highlights ── */
+  mark.find-match {
+    background: var(--accent-light);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+    scroll-margin-top: 80px;
+  }
+  mark.find-match.current {
+    background: var(--accent);
+    color: white;
+  }
+
+  /* ── Match navigation (inline in notebook search-header) ── */
+  .match-nav {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    margin-left: 2px;
+    flex-shrink: 0;
+  }
+  .match-nav.visible { display: flex; }
+  .match-nav-count {
+    color: var(--text-tertiary);
+    font-size: 10px;
+    white-space: nowrap;
+    user-select: none;
+    min-width: 36px;
+    text-align: center;
+  }
+  .match-nav-btn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    border-radius: 3px;
+    padding: 0;
+    transition: background 0.12s, color 0.12s;
+  }
+  .match-nav-btn:hover { background: var(--bg-hover); color: var(--text); }
+
   /* Empty state */
   .empty-state {
     text-align: center;
@@ -1762,6 +1914,10 @@
 
   .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
   .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+  .toggle-switch.toggle-sm { width: 34px; min-width: 34px; height: 20px; }
+  .toggle-sm .toggle-slider::before { height: 14px; width: 14px; }
+  .toggle-sm input:checked + .toggle-slider::before { transform: translateX(14px); }
 
   .import-actions {
     display: flex;
@@ -2125,9 +2281,13 @@
 
       <div class="stats-row" id="home-stats"></div>
 
-      <div class="search-bar">
-        <span class="search-icon">&#128269;</span>
-        <input class="search-input" id="timeline-search" type="text" placeholder="Search notes..." oninput="renderTimeline()">
+      <div class="search-header" id="search-header-home">
+        <span class="search-header-icon" onclick="toggleSearchHeader('home')" title="Search notes">&#128269;</span>
+        <div class="search-header-input-wrap" id="search-input-wrap-home">
+          <input id="timeline-search" type="text" placeholder="Search notes..." oninput="renderTimeline()">
+          <span class="search-header-close" onclick="closeSearchHeader('home')">&times;</span>
+        </div>
+        <span class="search-header-right" id="search-header-right-home"></span>
       </div>
 
       <div id="timeline-container">
@@ -2145,7 +2305,14 @@
         <div class="page-tagline">Browse all tagged content across notebooks</div>
       </div>
 
-      <div class="tags-breadcrumb" id="tags-breadcrumb"></div>
+      <div class="search-header" id="search-header-tags">
+        <span class="search-header-icon" onclick="toggleSearchHeader('tags')" title="Search tags">&#128269;</span>
+        <div class="search-header-input-wrap" id="search-input-wrap-tags">
+          <input id="tags-search-input" type="text" placeholder="Filter tags..." oninput="onTagSearchHeaderInput(this.value)">
+          <span class="search-header-close" onclick="closeSearchHeader('tags')">&times;</span>
+        </div>
+        <span class="search-header-right" id="tags-header-right"></span>
+      </div>
 
       <div id="tags-view-container">
         <div class="empty-state">
@@ -2189,7 +2356,7 @@
           <div class="import-setting">
             <label class="import-label">Notebook name</label>
             <span class="import-hint">The folder name inside <code>entries/</code> for imported notes</span>
-            <input type="text" id="import-notebook-name" class="import-input" value="apple-notes" placeholder="apple-notes" />
+            <input type="text" id="import-notebook-name" class="import-input" value="apple-notes" placeholder="apple-notes" oninput="importNotebookName = this.value.trim() || 'apple-notes'" />
           </div>
 
           <div class="import-setting">
@@ -2376,6 +2543,15 @@ git push origin v0.2.0</code></pre>
       </div>
       <div class="inspector-icon-picker" id="inspector-nb-icons" style="display:none"></div>
     </div>
+    <div class="inspector-field" id="inspector-nb-show-backups-field" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;" title="Backups are created when a re-import overwrites an existing note.">
+        <label class="inspector-label" style="margin:0;cursor:pointer;" for="inspector-nb-show-backups">Show backups</label>
+        <label class="toggle-switch toggle-sm">
+          <input type="checkbox" id="inspector-nb-show-backups" onchange="toggleShowBackups(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
   </div>
 
   <div class="inspector-card" id="inspector-card-entry">
@@ -2424,11 +2600,11 @@ git push origin v0.2.0</code></pre>
 // Any .md file inside entries/ becomes a notebook automatically.
 // No registration needed — just drop a file in the folder.
 let NOTEBOOKS = [];
-/** Returns the current Apple Notes import target name (used to auto-detect read-only notebooks). */
-function getImportNotebookName() {
-  const el = document.getElementById('import-notebook-name');
-  return (el ? el.value.trim() : '') || 'apple-notes';
-}
+
+// The import target name determines which directory notebook is treated as read-only.
+// This is a JS variable (not a DOM read) so it's reliable during early discovery.
+let importNotebookName = 'apple-notes';
+function getImportNotebookName() { return importNotebookName; }
 
 // Icon palette — cycles through these for discovered notebooks
 const NB_ICONS = [
@@ -2715,6 +2891,8 @@ let pendingSelection = null; // Stores selection info for tagging
 let dirHandle = null;        // File System Access API directory handle
 let rawNotebookTexts = {};   // Raw .md content keyed by notebook id (for rewriting)
 let rawDirNotebookTexts = {}; // For directory notebooks: { notebookId: { filename: text } }
+let backupEntries = {};        // { notebookId: [ parsed entries from .backup.md files ] }
+let showBackupsFor = {};       // { notebookId: true/false } — user toggle state
 
 // ============================================================
 // MARKDOWN PARSER (lightweight, no dependencies)
@@ -2968,13 +3146,22 @@ function parseDateFromFilename(filename) {
   return null;
 }
 
-function parseDirectoryNotebook(files, notebookId, notebookName) {
+function parseDirectoryNotebook(files, notebookId, notebookName, opts) {
   // files: array of { name, text } objects (filename + file content)
+  // opts.allowBackups: if true, process .backup.md files (stripping suffix for date parsing)
   // Returns entries in the same shape as parseNotebook()
+  const allowBackups = opts && opts.allowBackups;
   const entries = [];
 
   for (const file of files) {
-    const dateParsed = parseDateFromFilename(file.name);
+    // Skip backup files unless explicitly allowed
+    const isBackup = file.name.endsWith('.backup.md');
+    if (isBackup && !allowBackups) continue;
+
+    // For backup files, strip .backup.md → .md so date parsing works on the base name
+    const parseName = isBackup ? file.name.replace('.backup.md', '.md') : file.name;
+
+    const dateParsed = parseDateFromFilename(parseName);
 
     let body = file.text.trim();
 
@@ -2996,7 +3183,7 @@ function parseDirectoryNotebook(files, notebookId, notebookName) {
     } else {
       // No date in filename — use the filename itself as the title
       // and fall back to epoch (will sort to the end)
-      const baseName = file.name.replace(/\.md$/i, '').replace(/[-_]+/g, ' ').trim();
+      const baseName = parseName.replace(/\.md$/i, '').replace(/[-_]+/g, ' ').trim();
       if (body && !body.startsWith('#')) {
         body = `## ${baseName}\n\n${body}`;
       } else if (!body) {
@@ -3147,6 +3334,7 @@ async function loadNotebooks() {
   allEntries = [];
   notebookEntries = {};
   allTags = {};
+  backupEntries = {};
 
   results.forEach((result, i) => {
     const nb = NOTEBOOKS[i];
@@ -3162,6 +3350,13 @@ async function loadNotebooks() {
         rawDirNotebookTexts[nb.id] = {};
         for (const f of val.files) {
           rawDirNotebookTexts[nb.id][f.name] = f.text;
+        }
+        // Parse backup files (hidden by default, toggled via inspector)
+        if (val.backupFiles && val.backupFiles.length > 0) {
+          const bEntries = parseDirectoryNotebook(val.backupFiles, nb.id, nb.name, { allowBackups: true });
+          // Mark each as a backup so the UI can label them
+          bEntries.forEach(e => { e.isBackup = true; });
+          backupEntries[nb.id] = bEntries;
         }
       } else {
         // Single-file notebook: parse as before
@@ -3218,7 +3413,42 @@ async function loadDirectoryNotebook(nb) {
     }
   }
 
-  return { notebook: nb, files, type: 'directory' };
+  // Also load backup files for readonly notebooks (stored separately, toggled by user)
+  const backupFiles = [];
+  if (nb.readonly) {
+    if (IS_TAURI && nb.absDir) {
+      try {
+        const dirName = nb.absDir.split('/entries/')[1] || nb.dirName;
+        const rootFolder = nb.absDir.replace('/entries/' + dirName, '');
+        const backupNames = await tauriInvoke('list_dir_backups', { root: rootFolder, dir_name: dirName });
+        for (const bName of backupNames) {
+          try {
+            const text = await tauriInvoke('read_file', { path: nb.absDir + '/' + bName });
+            backupFiles.push({ name: bName, text });
+          } catch (e) { /* skip unreadable backups */ }
+        }
+      } catch (e) {
+        console.info('Backup listing failed for', nb.name, e);
+      }
+    } else if (dirHandle) {
+      try {
+        const entriesDir = await dirHandle.getDirectoryHandle('entries');
+        const subDir = await entriesDir.getDirectoryHandle(nb.dirName || nb.file.replace('entries/', ''));
+        for await (const entry of subDir.values()) {
+          if (entry.kind === 'file' && entry.name.endsWith('.backup.md')) {
+            try {
+              const fileHandle = await subDir.getFileHandle(entry.name);
+              const file = await fileHandle.getFile();
+              const text = await file.text();
+              backupFiles.push({ name: entry.name, text });
+            } catch (e) { /* skip */ }
+          }
+        }
+      } catch (e) { /* skip */ }
+    }
+  }
+
+  return { notebook: nb, files, backupFiles, type: 'directory' };
 }
 
 // ============================================================
@@ -3259,6 +3489,10 @@ function renderHomeStats() {
       <div class="stat-label">Latest entry</div>
     </div>
   `;
+
+  // Update search-header right-side info
+  const rightEl = document.getElementById('search-header-right-home');
+  if (rightEl) rightEl.textContent = `${totalEntries} entries \u00b7 ${totalNotebooks} notebooks`;
 }
 
 function renderTimeline() {
@@ -3280,7 +3514,7 @@ function renderTimeline() {
   }
 
   container.innerHTML = `<div class="library-grid">` + filtered.map((entry, i) => `
-    <div class="library-card" onclick="openEntry('${entry.notebook}', '${entry.date}')">
+    <div class="library-card" onclick="_pendingFindQuery = getLibrarySearchQuery(); openEntry('${entry.notebook}', '${entry.date}')">
       <div class="library-card-date">${formatShortDate(entry.dateObj)}</div>
       <div class="library-card-preview">${escapeHtml(entry.preview)}</div>
       <div class="library-card-source">${entry.notebookName}</div>
@@ -3305,9 +3539,18 @@ function renderNotebookPages() {
         <div class="page-tagline">${(notebookEntries[nb.id] || []).length} entries</div>
       </div>
 
-      <div class="search-bar">
-        <span class="search-icon">&#128269;</span>
-        <input class="search-input" id="search-${nb.id}" type="text" placeholder="Search this notebook..." oninput="filterNotebook('${nb.id}')">
+      <div class="search-header" id="search-header-nb-${nb.id}">
+        <span class="search-header-icon" onclick="toggleSearchHeader('nb-${nb.id}')" title="Search this notebook (${navigator.platform.match(/Mac/) ? '⌘' : 'Ctrl+'}F)">&#128269;</span>
+        <div class="search-header-input-wrap" id="search-input-wrap-nb-${nb.id}">
+          <input id="search-${nb.id}" type="text" placeholder="Search this notebook..." oninput="onNotebookSearchInput('${nb.id}')">
+          <div class="match-nav" id="match-nav-${nb.id}">
+            <span class="match-nav-count" id="match-count-${nb.id}"></span>
+            <button class="match-nav-btn" onclick="findBarNav(-1)" title="Previous">&#9650;</button>
+            <button class="match-nav-btn" onclick="findBarNav(1)" title="Next">&#9660;</button>
+          </div>
+          <span class="search-header-close" onclick="closeSearchHeader('nb-${nb.id}'); filterNotebook('${nb.id}')">&times;</span>
+        </div>
+        <span class="search-header-right">${(notebookEntries[nb.id] || []).length} entries</span>
       </div>
 
       <div class="notebook-content-wrapper" id="nb-wrapper-${nb.id}">
@@ -3368,9 +3611,13 @@ function renderThumbnails(notebookId, filterText) {
       ? `oncontextmenu="showThumbContextMenu(event, '${notebookId}', ${origIndex})"`
       : '';
 
+    const backupBadge = entry.isBackup
+      ? '<span style="display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;background:var(--yellow-bg,#fef3cd);color:var(--yellow-text,#856404);margin-left:6px;vertical-align:middle;">backup</span>'
+      : '';
+
     html += `
       <div class="thumb-item ${origIndex === selected ? 'active' : ''}" onclick="selectEntry('${notebookId}', ${origIndex})" ${ctxHandler} data-entry-index="${origIndex}">
-        <div class="thumb-date">${formatShortDate(entry.dateObj)}</div>
+        <div class="thumb-date">${formatShortDate(entry.dateObj)}${backupBadge}</div>
         <div class="thumb-preview">${escapeHtml(entry.preview.substring(0, 80))}</div>
       </div>
     `;
@@ -3398,6 +3645,44 @@ function selectEntry(notebookId, index) {
 function isNotebookReadonly(notebookId) {
   const nb = NOTEBOOKS.find(n => n.id === notebookId);
   return nb ? !!nb.readonly : false;
+}
+
+function toggleShowBackups(show) {
+  const nbId = _inspectorNotebookId;
+  if (!nbId) return;
+  const bEntries = backupEntries[nbId];
+  if (!bEntries || bEntries.length === 0) return;
+
+  showBackupsFor[nbId] = show;
+
+  if (show) {
+    // Merge backup entries into the notebook's entry list
+    const existing = notebookEntries[nbId] || [];
+    // Avoid duplicates: only add if not already present
+    const existingFiles = new Set(existing.map(e => e.sourceFile));
+    const toAdd = bEntries.filter(e => !existingFiles.has(e.sourceFile));
+    notebookEntries[nbId] = [...existing, ...toAdd];
+    allEntries.push(...toAdd);
+  } else {
+    // Remove backup entries
+    notebookEntries[nbId] = (notebookEntries[nbId] || []).filter(e => !e.isBackup);
+    allEntries = allEntries.filter(e => !(e.notebook === nbId && e.isBackup));
+  }
+
+  // Re-sort
+  notebookEntries[nbId].sort((a, b) => b.dateObj - a.dateObj);
+  allEntries.sort((a, b) => b.dateObj - a.dateObj);
+
+  // Re-render
+  renderThumbnails(nbId);
+  renderNav();
+
+  // Update count in inspector card title area if needed
+  const countEl = document.getElementById('nav-notebook-' + nbId);
+  if (countEl) {
+    const badge = countEl.querySelector('.nav-badge');
+    if (badge) badge.textContent = (notebookEntries[nbId] || []).length;
+  }
 }
 
 function renderDetailPanel(notebookId, index) {
@@ -3434,6 +3719,18 @@ function renderDetailPanel(notebookId, index) {
   `;
 
   panel.scrollTop = 0;
+
+  // Highlight search matches if there's an active query (pending or notebook search)
+  const findQ = _pendingFindQuery || getNotebookSearchQuery(notebookId);
+  if (findQ) {
+    requestAnimationFrame(() => highlightEntryMatches(notebookId, findQ, 0));
+  } else {
+    // Clear match-nav if no query
+    _findTotalMatches = 0; _findLastQuery = '';
+    _updateMatchNav(notebookId);
+  }
+  // Clear the one-shot pending query after use
+  _pendingFindQuery = '';
 
   // Update the floating inspector cards
   updateInspector(notebookId, index);
@@ -3603,6 +3900,16 @@ function updateInspector(notebookId, entryIndex) {
   document.getElementById('inspector-nb-name-input').style.display = 'none';
   document.getElementById('inspector-nb-name-display').style.display = '';
   renderInspectorIcons(notebookId, nb.icon);
+
+  // Show/hide "Show backups" checkbox for readonly notebooks that have backup files
+  const backupsField = document.getElementById('inspector-nb-show-backups-field');
+  const backupsCb = document.getElementById('inspector-nb-show-backups');
+  if (backupsField) {
+    const hasBackups = !!(backupEntries[notebookId] && backupEntries[notebookId].length > 0);
+    const readonly = isNotebookReadonly(notebookId);
+    backupsField.style.display = (readonly && hasBackups) ? '' : 'none';
+    if (backupsCb) backupsCb.checked = !!showBackupsFor[notebookId];
+  }
 
   // ── Entry card ──
   const entryFields = document.getElementById('inspector-entry-fields');
@@ -3786,6 +4093,230 @@ function openEntry(notebookId, date) {
   if (index !== -1) selectEntry(notebookId, index);
 }
 
+/**
+ * Opens an entry and scrolls to the specific tagged text, highlighting it.
+ * tagName is the data-tag value used to find the <span data-tag="..."> in the entry HTML.
+ */
+function openEntryAndScrollToTag(notebookId, date, tagName) {
+  navigate(`notebook-${notebookId}`);
+  const entries = notebookEntries[notebookId] || [];
+  const index = entries.findIndex(e => e.date === date);
+  if (index === -1) return;
+
+  selectEntry(notebookId, index);
+
+  // After the detail panel renders, find the tagged span and scroll to it
+  requestAnimationFrame(() => {
+    const panel = document.getElementById(`detail-panel-${notebookId}`);
+    if (!panel) return;
+
+    // Find the <span data-tag="tagName"> in the rendered entry
+    const tagSpan = panel.querySelector(`span[data-tag="${CSS.escape(tagName)}"]`);
+    if (tagSpan) {
+      // Remove any previous highlight
+      panel.querySelectorAll('.tag-highlight-flash').forEach(el => el.classList.remove('tag-highlight-flash'));
+      // Add highlight and scroll
+      tagSpan.classList.add('tag-highlight-flash');
+      tagSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Clean up after animation
+      tagSpan.addEventListener('animationend', () => {
+        tagSpan.classList.remove('tag-highlight-flash');
+      }, { once: true });
+    }
+  });
+}
+
+// ============================================================
+// FIND-IN-ENTRY — unified with notebook search-header
+// ============================================================
+
+/** One-shot query set by library card click before openEntry */
+let _pendingFindQuery = '';
+
+/** Current match-navigation state */
+let _findCurrentIndex = 0;
+let _findTotalMatches = 0;
+let _findLastQuery = '';
+let _findNotebookId = '';
+
+/**
+ * Get the active .entry-content element for the current notebook page.
+ */
+function _getActiveEntryContent() {
+  if (!currentPage.startsWith('notebook-')) return null;
+  const nbId = currentPage.replace('notebook-', '');
+  const panel = document.getElementById(`detail-panel-${nbId}`);
+  return panel ? panel.querySelector('.entry-content') : null;
+}
+
+/**
+ * Strip existing <mark class="find-match"> from a content element.
+ */
+function _clearFindMarks(contentEl) {
+  if (!contentEl) return;
+  contentEl.querySelectorAll('mark.find-match').forEach(mark => {
+    const parent = mark.parentNode;
+    parent.replaceChild(document.createTextNode(mark.textContent), mark);
+    parent.normalize();
+  });
+}
+
+/**
+ * Highlight all occurrences of `query` inside a .entry-content element.
+ * Highlights the match at startIndex as "current" and scrolls to it.
+ */
+function highlightEntryMatches(notebookId, query, startIndex) {
+  const panel = document.getElementById(`detail-panel-${notebookId}`);
+  if (!panel) return 0;
+  const contentEl = panel.querySelector('.entry-content');
+  if (!contentEl || !query) {
+    _findTotalMatches = 0;
+    _findLastQuery = query || '';
+    _findNotebookId = notebookId;
+    _updateMatchNav(notebookId);
+    return 0;
+  }
+
+  _clearFindMarks(contentEl);
+
+  const q = query.toLowerCase();
+  const textNodes = [];
+  const walker = document.createTreeWalker(contentEl, NodeFilter.SHOW_TEXT, null);
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+  let matchCount = 0;
+  textNodes.forEach(node => {
+    const text = node.textContent;
+    const lower = text.toLowerCase();
+    if (!lower.includes(q)) return;
+
+    const frag = document.createDocumentFragment();
+    let lastIdx = 0, idx;
+    while ((idx = lower.indexOf(q, lastIdx)) !== -1) {
+      if (idx > lastIdx) frag.appendChild(document.createTextNode(text.substring(lastIdx, idx)));
+      const mark = document.createElement('mark');
+      mark.className = 'find-match';
+      mark.textContent = text.substring(idx, idx + q.length);
+      frag.appendChild(mark);
+      matchCount++;
+      lastIdx = idx + q.length;
+    }
+    if (lastIdx < text.length) frag.appendChild(document.createTextNode(text.substring(lastIdx)));
+    node.parentNode.replaceChild(frag, node);
+  });
+
+  _findTotalMatches = matchCount;
+  _findNotebookId = notebookId;
+  _findLastQuery = query;
+
+  if (matchCount > 0) {
+    const si = (typeof startIndex === 'number') ? Math.max(0, Math.min(startIndex, matchCount - 1)) : 0;
+    _findCurrentIndex = si;
+    _setCurrentMatch(contentEl, si);
+  } else {
+    _findCurrentIndex = 0;
+  }
+
+  _updateMatchNav(notebookId);
+  return matchCount;
+}
+
+/**
+ * Move the "current" class to the match at `idx` and scroll to it.
+ */
+function _setCurrentMatch(contentEl, idx) {
+  if (!contentEl) return;
+  const marks = contentEl.querySelectorAll('mark.find-match');
+  marks.forEach((m, i) => m.classList.toggle('current', i === idx));
+  if (marks[idx]) marks[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/**
+ * Show/hide the inline match-nav (count + arrows) in a notebook's search-header.
+ */
+function _updateMatchNav(notebookId) {
+  const nav = document.getElementById(`match-nav-${notebookId}`);
+  const countEl = document.getElementById(`match-count-${notebookId}`);
+  if (!nav || !countEl) return;
+
+  if (_findTotalMatches > 0) {
+    nav.classList.add('visible');
+    countEl.textContent = `${_findCurrentIndex + 1}/${_findTotalMatches}`;
+  } else if (_findLastQuery) {
+    nav.classList.add('visible');
+    countEl.textContent = '0';
+  } else {
+    nav.classList.remove('visible');
+    countEl.textContent = '';
+  }
+}
+
+// ── Notebook search input handler (dual: filter thumbnails + highlight entry) ──
+
+function onNotebookSearchInput(notebookId) {
+  const query = document.getElementById(`search-${notebookId}`).value;
+  // Filter thumbnails
+  renderThumbnails(notebookId, query);
+  // Highlight matches in the currently open entry
+  if (query.trim()) {
+    highlightEntryMatches(notebookId, query.trim(), 0);
+  } else {
+    // Clear highlights
+    const contentEl = _getActiveEntryContent();
+    _clearFindMarks(contentEl);
+    _findTotalMatches = 0;
+    _findLastQuery = '';
+    _updateMatchNav(notebookId);
+  }
+}
+
+// ── Navigate between matches (used by ▲/▼ buttons and Enter/Shift+Enter) ──
+
+function findBarNav(direction) {
+  if (_findTotalMatches === 0) return;
+  let next = _findCurrentIndex + direction;
+  if (next >= _findTotalMatches) next = 0;
+  if (next < 0) next = _findTotalMatches - 1;
+  _findCurrentIndex = next;
+
+  const contentEl = _getActiveEntryContent();
+  _setCurrentMatch(contentEl, next);
+  _updateMatchNav(_findNotebookId);
+}
+
+// ── Wire keyboard on notebook search inputs (Enter cycles, Escape closes) ──
+
+document.addEventListener('keydown', e => {
+  // Only handle when a notebook search input is focused
+  const active = document.activeElement;
+  if (!active || !active.id || !active.id.startsWith('search-')) return;
+  // Extract notebookId from input id "search-{nbId}"
+  const nbId = active.id.replace('search-', '');
+  if (!nbId) return;
+
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    findBarNav(e.shiftKey ? -1 : 1);
+  }
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    closeSearchHeader('nb-' + nbId);
+    filterNotebook(nbId);
+  }
+}, true); // capture phase so it fires before other handlers
+
+// ── Helpers ──
+
+function getNotebookSearchQuery(notebookId) {
+  const input = document.getElementById(`search-${notebookId}`);
+  return input ? input.value.trim() : '';
+}
+
+function getLibrarySearchQuery() {
+  const input = document.getElementById('timeline-search');
+  return input ? input.value.trim() : '';
+}
+
 function filterNotebook(notebookId) {
   const query = document.getElementById(`search-${notebookId}`).value;
   renderThumbnails(notebookId, query);
@@ -3832,6 +4363,14 @@ function navigate(page) {
   if (navEl) navEl.classList.add('active');
 
   document.getElementById('sidebar').classList.remove('open');
+
+  // Clear find highlights when leaving a notebook page
+  if (!page.startsWith('notebook-')) {
+    const contentEl = _getActiveEntryContent();
+    _clearFindMarks(contentEl);
+    _findTotalMatches = 0;
+    _findLastQuery = '';
+  }
 
   // Show/hide inspector cards based on whether we're on a notebook page
   if (page.startsWith('notebook-')) {
@@ -3890,6 +4429,67 @@ function toggleTheme() {
 })();
 
 // ============================================================
+// UNIVERSAL SEARCH-HEADER (toggle / close)
+// ============================================================
+
+function toggleSearchHeader(id) {
+  const wrap = document.getElementById(`search-input-wrap-${id}`);
+  if (!wrap) return;
+  const isOpen = wrap.classList.contains('open');
+  if (isOpen) {
+    closeSearchHeader(id);
+  } else {
+    wrap.classList.add('open');
+    const input = wrap.querySelector('input');
+    if (input) { input.focus(); }
+  }
+}
+
+function closeSearchHeader(id) {
+  const wrap = document.getElementById(`search-input-wrap-${id}`);
+  if (!wrap) return;
+  wrap.classList.remove('open');
+  const input = wrap.querySelector('input');
+  if (input) { input.value = ''; }
+
+  // Reset page-specific search state
+  if (id === 'tags') {
+    tagFolderSearchQuery = '';
+    tagDetailSearchQuery = '';
+    renderTagsPage();
+  } else if (id === 'home') {
+    renderTimeline();
+  } else if (id.startsWith('nb-')) {
+    // Clear find highlights and match nav when closing notebook search
+    const nbId = id.replace('nb-', '');
+    const contentEl = _getActiveEntryContent();
+    _clearFindMarks(contentEl);
+    _findTotalMatches = 0;
+    _findLastQuery = '';
+    _updateMatchNav(nbId);
+  }
+  // For notebooks: the close handler in the HTML also calls filterNotebook()
+}
+
+/** Handler for the tags search-header input */
+function onTagSearchHeaderInput(value) {
+  if (activeTagFilter) {
+    tagDetailSearchQuery = value;
+    renderTagDetail(activeTagFilter);
+  } else {
+    tagFolderSearchQuery = value;
+    renderTagFolders();
+  }
+}
+
+// ============================================================
+// TAG PAGE SEARCH STATE
+// ============================================================
+
+let tagFolderSearchQuery = '';   // search query for the tag folders grid
+let tagDetailSearchQuery = '';   // search query within a tag's items
+
+// ============================================================
 // TAGS PAGE
 // ============================================================
 
@@ -3901,11 +4501,12 @@ function renderTagsPage() {
   const count = tagNames.length;
   document.getElementById('nav-tag-count').textContent = count;
 
-  const breadcrumb = document.getElementById('tags-breadcrumb');
   const container  = document.getElementById('tags-view-container');
 
   if (count === 0) {
-    breadcrumb.innerHTML = '';
+    // Update search-header to reflect empty state
+    const right = document.getElementById('tags-header-right');
+    if (right) right.textContent = '';
     container.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">&#9873;</div>
@@ -3923,42 +4524,79 @@ function renderTagsPage() {
 
 /* ── Root view: tag folders ── */
 function renderTagFolders() {
-  const breadcrumb = document.getElementById('tags-breadcrumb');
   const container  = document.getElementById('tags-view-container');
-  const tagNames   = Object.keys(allTags).sort();
+  let tagNames   = Object.keys(allTags).sort();
   const totalItems = Object.values(allTags).reduce((s,a) => s + a.length, 0);
 
-  breadcrumb.style.display = '';
-  breadcrumb.innerHTML = `<span class="bc-current">Tags</span><span style="margin-left:auto;font-size:11px;">${tagNames.length} tags &middot; ${totalItems} items</span>`;
+  // Update the search-header right-side info
+  const right = document.getElementById('tags-header-right');
+  if (right) right.textContent = `${tagNames.length} tags \u00b7 ${totalItems} items`;
 
-  container.innerHTML = '<div class="tags-folder-grid">' +
-    tagNames.map(t => `
-      <div class="tag-folder" onclick="filterTags('${t}')" title="${allTags[t].length} item${allTags[t].length !== 1 ? 's' : ''}">
-        <div class="tag-folder-name">${t}</div>
-        <div class="tag-folder-count">${allTags[t].length} item${allTags[t].length !== 1 ? 's' : ''}</div>
-      </div>`
-    ).join('') + '</div>';
+  // Update search input placeholder for folder-level search
+  const searchInput = document.getElementById('tags-search-input');
+  if (searchInput) {
+    searchInput.placeholder = 'Filter tags...';
+    searchInput.value = tagFolderSearchQuery;
+  }
+
+  // Filter tags by search query
+  const q = tagFolderSearchQuery.toLowerCase().trim();
+  if (q) {
+    tagNames = tagNames.filter(t => t.toLowerCase().includes(q));
+  }
+
+  let html = '';
+  if (tagNames.length === 0) {
+    html += '<div class="empty-state"><div class="empty-state-text">No tags match your search.</div></div>';
+  } else {
+    html += '<div class="tags-folder-grid">' +
+      tagNames.map(t => `
+        <div class="tag-folder" onclick="filterTags('${t}')" title="${allTags[t].length} item${allTags[t].length !== 1 ? 's' : ''}">
+          <div class="tag-folder-name">${t}</div>
+          <div class="tag-folder-count">${allTags[t].length} item${allTags[t].length !== 1 ? 's' : ''}</div>
+        </div>`
+      ).join('') + '</div>';
+  }
+
+  container.innerHTML = html;
 }
 
 /* ── Detail view: items inside a tag, sorted by date ── */
 function renderTagDetail(tagName) {
-  const breadcrumb = document.getElementById('tags-breadcrumb');
   const container  = document.getElementById('tags-view-container');
   const items      = allTags[tagName] || [];
 
-  // Hide breadcrumb in detail view — the inline header handles navigation
-  breadcrumb.style.display = 'none';
+  // Update the search-header right-side info for tag detail
+  const right = document.getElementById('tags-header-right');
+  if (right) right.textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
+
+  // Update search input placeholder and value for detail-level search
+  const searchInput = document.getElementById('tags-search-input');
+  if (searchInput) {
+    searchInput.placeholder = `Search in \u201c${tagName}\u201d...`;
+    searchInput.value = tagDetailSearchQuery;
+  }
 
   if (items.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-text">No items with this tag.</div></div>';
     return;
   }
 
+  // Filter items by detail search query
+  const dq = tagDetailSearchQuery.toLowerCase().trim();
+  let filteredItems = items;
+  if (dq) {
+    filteredItems = items.filter(item => {
+      const plain = item.text.replace(/\*\*/g, '').replace(/\*/g, '').toLowerCase();
+      const source = (item.notebookName || item.notebookId || '').toLowerCase();
+      return plain.includes(dq) || source.includes(dq) || (item.date || '').includes(dq);
+    });
+  }
+
   // Sort items
-  const sorted = [...items].sort((a, b) => {
+  const sorted = [...filteredItems].sort((a, b) => {
     let cmp = 0;
     if (tagSortField === 'date') {
-      // Parse MM-DD-YYYY to comparable values
       const da = tagDateToTimestamp(a.date), db = tagDateToTimestamp(b.date);
       cmp = da - db;
     } else if (tagSortField === 'source') {
@@ -3972,10 +4610,11 @@ function renderTagDetail(tagName) {
   });
 
   // Single header row: back arrow | tag name | count | actions
+  const safeTagAttr = tagName.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   let html = `<div class="tag-detail-header">`;
-  html += `<button class="tag-detail-back" onclick="filterTags(null)" title="All tags">&larr;</button>`;
-  html += `<span class="tag-detail-title">${tagName}</span>`;
-  html += `<span class="tag-detail-count">${items.length} item${items.length !== 1 ? 's' : ''}</span>`;
+  html += `<button class="tag-detail-back" onclick="tagDetailSearchQuery=''; filterTags(null)" title="All tags">&larr;</button>`;
+  html += `<span class="tag-detail-title">${escapeHtml(tagName)}</span>`;
+  html += `<span class="tag-detail-count">${filteredItems.length}${dq ? ' of ' + items.length : ''} item${filteredItems.length !== 1 ? 's' : ''}</span>`;
   html += `<div class="tag-detail-actions-inline">`;
 
   if (tagRemoveMode) {
@@ -3991,28 +4630,35 @@ function renderTagDetail(tagName) {
 
   html += `</div></div>`;
 
-  html += '<div class="tags-folder-grid">';
-  sorted.forEach((item, i) => {
-    const plainText = item.text.replace(/\*\*/g, '').replace(/\*/g, '');
-    const sourceName = escapeHtml(item.notebookName || item.notebookId);
-    const isSelected = tagRemoveSelected.has(i);
-    if (tagRemoveMode) {
-      html += `
-        <div class="tag-item-card selectable ${isSelected ? 'selected' : ''}" onclick="toggleTagRemoveCard(${i})">
-          <div class="tag-card-check">${isSelected ? '&#10003;' : ''}</div>
-          <div class="tag-item-card-text">${escapeHtml(plainText)}</div>
-          <div class="tag-item-card-meta">${sourceName} &middot; <span class="card-date">${item.date}</span></div>
-        </div>`;
-    } else {
-      html += `
-        <div class="tag-item-card">
-          <button class="tag-item-card-go" onclick="openEntry('${item.notebookId}', '${item.date}')" title="Open in notebook">&nearr;</button>
-          <div class="tag-item-card-text">${escapeHtml(plainText)}</div>
-          <div class="tag-item-card-meta">${sourceName} &middot; <span class="card-date">${item.date}</span></div>
-        </div>`;
-    }
-  });
-  html += '</div>';
+  if (sorted.length === 0 && dq) {
+    html += '<div class="empty-state"><div class="empty-state-text">No items match your search.</div></div>';
+  } else {
+    html += '<div class="tags-folder-grid">';
+    sorted.forEach((item, i) => {
+      const plainText = item.text.replace(/\*\*/g, '').replace(/\*/g, '');
+      const sourceName = escapeHtml(item.notebookName || item.notebookId);
+      // Find original index in items array for tag removal
+      const origIdx = items.indexOf(item);
+      const isSelected = tagRemoveSelected.has(origIdx);
+      if (tagRemoveMode) {
+        html += `
+          <div class="tag-item-card selectable ${isSelected ? 'selected' : ''}" onclick="toggleTagRemoveCard(${origIdx})">
+            <div class="tag-card-check">${isSelected ? '&#10003;' : ''}</div>
+            <div class="tag-item-card-text">${escapeHtml(plainText)}</div>
+            <div class="tag-item-card-meta">${sourceName} &middot; <span class="card-date">${item.date}</span></div>
+          </div>`;
+      } else {
+        // Use openEntryAndScrollToTag to jump directly to the tagged text
+        html += `
+          <div class="tag-item-card">
+            <button class="tag-item-card-go" data-nb="${item.notebookId}" data-date="${item.date}" data-tagname="${safeTagAttr}" onclick="openEntryAndScrollToTag(this.dataset.nb, this.dataset.date, this.dataset.tagname)" title="Go to tagged text">&nearr;</button>
+            <div class="tag-item-card-text">${escapeHtml(plainText)}</div>
+            <div class="tag-item-card-meta">${sourceName} &middot; <span class="card-date">${item.date}</span></div>
+          </div>`;
+      }
+    });
+    html += '</div>';
+  }
 
   container.innerHTML = html;
 }
@@ -4034,6 +4680,8 @@ function filterTags(tagName) {
   activeTagFilter = tagName;
   tagRemoveMode = false;
   tagRemoveSelected.clear();
+  // Reset detail search when navigating into a new tag or back to folders
+  tagDetailSearchQuery = '';
   // Reset sort to date-descending when entering a new folder
   if (tagName) { tagSortField = 'date'; tagSortAsc = false; }
   renderTagsPage();
@@ -4714,6 +5362,22 @@ document.addEventListener('keydown', e => {
     return;
   }
 
+  // Find-in-entry: Cmd+F / Ctrl+F opens the search-header on notebook pages
+  if (mod && e.key === 'f') {
+    if (currentPage.startsWith('notebook-')) {
+      e.preventDefault();
+      const nbId = currentPage.replace('notebook-', '');
+      toggleSearchHeader('nb-' + nbId);
+      // Pre-fill with text selection if any
+      const sel = window.getSelection().toString().trim();
+      if (sel) {
+        const input = document.getElementById('search-' + nbId);
+        if (input) { input.value = sel; onNotebookSearchInput(nbId); }
+      }
+      return;
+    }
+  }
+
   if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
     const nbPage = currentPage.startsWith('notebook-') ? currentPage.replace('notebook-', '') : null;
     if (!nbPage) return;
@@ -4823,6 +5487,12 @@ async function initAppleNotesSection() {
   const section = document.getElementById('apple-notes-section');
   const unavailable = document.getElementById('apple-notes-unavailable');
   const controls = document.getElementById('apple-notes-controls');
+
+  // Sync the JS variable from the input's current value (handles browser-restored values)
+  const nbNameInput = document.getElementById('import-notebook-name');
+  if (nbNameInput && nbNameInput.value.trim()) {
+    importNotebookName = nbNameInput.value.trim();
+  }
 
   if (!IS_TAURI) {
     // Browser mode — show unavailable message
