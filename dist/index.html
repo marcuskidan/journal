@@ -102,7 +102,7 @@
     width: 240px;
     background: var(--bg-nav);
     border-right: 1px solid var(--border);
-    padding: 24px 0;
+    padding: 24px 0 0;
     position: fixed;
     top: 0;
     left: 0;
@@ -175,6 +175,28 @@
     margin-top: 1px;
     letter-spacing: 0.01em;
     transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sidebar-refresh-btn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0 2px;
+    font-size: 13px;
+    line-height: 1;
+    border-radius: 3px;
+    transition: color 0.15s, background 0.15s;
+    display: none;
+  }
+  .sidebar-refresh-btn:hover {
+    color: var(--text);
+    background: var(--bg-hover);
+  }
+  .sidebar-brand.connected .sidebar-refresh-btn {
+    display: inline-flex;
   }
   .sidebar-brand.disconnected .sidebar-subtitle {
     color: var(--yellow);
@@ -243,7 +265,7 @@
 
   .sidebar-footer {
     margin-top: auto;
-    padding: 12px;
+    padding: 8px 12px;
     border-top: 1px solid var(--border);
   }
 
@@ -266,13 +288,64 @@
 
   .theme-toggle:hover { background: var(--bg-hover); color: var(--text); }
 
+  /* Sidebar collapse */
+  .sidebar { transition: width 0.2s ease, transform 0.2s ease; overflow: hidden; }
+  .sidebar.collapsed { width: 56px; }
+
+  /* Hide text labels but keep icons */
+  .sidebar.collapsed .sidebar-title,
+  .sidebar.collapsed .sidebar-subtitle,
+  .sidebar.collapsed .nav-section-label,
+  .sidebar.collapsed .nav-label,
+  .sidebar.collapsed .nav-badge,
+  .sidebar.collapsed .collapse-label,
+  .sidebar.collapsed #theme-label { display: none; }
+
+  /* Center the header dot and hide its text */
+  .sidebar.collapsed .sidebar-header { padding: 0 0 16px; display: flex; justify-content: center; }
+  .sidebar.collapsed .sidebar-brand { justify-content: center; gap: 0; }
+  .sidebar.collapsed .sidebar-brand > div:last-child { display: none; }
+
+  /* Center nav items */
+  .sidebar.collapsed .nav-section { padding: 8px 8px 4px; }
+  .sidebar.collapsed .nav-item { justify-content: center; padding: 7px 0; }
+  .sidebar.collapsed .nav-item .nav-icon { margin: 0; }
+
+  /* Footer items */
+  .sidebar.collapsed .sidebar-footer { padding: 8px; }
+  .sidebar.collapsed .theme-toggle { justify-content: center; padding: 8px 0; }
+  .sidebar.collapsed .sidebar-footer .nav-item { justify-content: center; padding: 7px 0; }
+
+  .collapse-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+  .collapse-toggle:hover { background: var(--bg-hover); color: var(--text); }
+  .collapse-toggle .collapse-icon { transition: transform 0.2s; font-size: 14px; }
+  .sidebar.collapsed .collapse-toggle { justify-content: center; padding: 8px; }
+  .sidebar.collapsed .collapse-toggle .collapse-icon { transform: rotate(180deg); }
+
   /* Main content */
   .main {
     margin-left: 240px;
     flex: 1;
     padding: 32px 48px;
     max-width: 1200px;
+    transition: margin-left 0.2s ease;
   }
+  .app.sidebar-collapsed .main { margin-left: 56px; }
   .main.has-inspector {
     max-width: calc(1200px + 520px);
   }
@@ -518,10 +591,10 @@
   .inspector-editable-value {
     font-size: 13px;
     color: var(--text);
-    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-family: var(--font-serif);
   }
   .inspector-edit-btn {
     flex-shrink: 0;
@@ -538,7 +611,9 @@
     transition: all 0.12s;
     font-size: 12px;
     padding: 0;
+    opacity: 0;
   }
+  .inspector-editable:hover .inspector-edit-btn { opacity: 1; }
   .inspector-edit-btn:hover { background: var(--bg-hover); color: var(--text); }
 
   .inspector-input {
@@ -693,6 +768,145 @@
     box-shadow: 0 0 10px color-mix(in srgb, var(--purple) 50%, transparent);
   }
 
+  /* Edit mode toggle button in entry inspector */
+  .edit-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .edit-mode-btn:hover { background: var(--bg-hover); color: var(--text); }
+  .edit-mode-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+  .edit-mode-btn.active:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+
+  /* Markdown formatting toolbar in entry inspector */
+  .edit-toolbar {
+    display: none;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 6px 0;
+  }
+  .edit-toolbar.visible { display: flex; }
+  .edit-toolbar-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.12s;
+    padding: 0;
+  }
+  .edit-toolbar-btn:hover { border-color: var(--accent); background: var(--accent-light, color-mix(in srgb, var(--accent) 10%, transparent)); color: var(--text); }
+  .edit-toolbar-btn.bold { font-weight: 700; }
+  .edit-toolbar-btn.italic { font-style: italic; font-family: var(--font-serif); }
+  .edit-toolbar-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 4px 3px;
+  }
+
+  /* Undo/redo buttons */
+  .edit-undo-redo {
+    display: none;
+    align-items: center;
+    gap: 2px;
+    margin-top: 2px;
+  }
+  .edit-undo-redo.visible { display: flex; }
+  .edit-undo-redo-btn {
+    flex: 1;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 500;
+    transition: all 0.12s;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .edit-undo-redo-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+  .edit-undo-redo-btn:disabled { opacity: 0.35; cursor: default; }
+
+  /* Entry content in edit mode */
+  .entry-content.editing {
+    outline: none;
+    border: 1px dashed color-mix(in srgb, var(--accent) 40%, transparent);
+    border-radius: 6px;
+    padding: 8px;
+    margin: -9px;
+    min-height: 80px;
+    cursor: text;
+  }
+  .entry-content.editing:focus {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 3%, transparent);
+  }
+
+  /* Auto-save status icon */
+  .autosave-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .autosave-indicator.visible { display: flex; }
+  .autosave-icon {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    cursor: default;
+    border-radius: var(--radius);
+    transition: color 0.2s;
+  }
+  .autosave-indicator.saving .autosave-icon {
+    animation: autosave-spin 0.8s linear infinite;
+  }
+  @keyframes autosave-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Tagging disabled state */
+  .tagging-mode-btn:disabled,
+  .tagging-mode-btn.disabled-by-edit {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+  }
+
   /* Arrow to navigate to All Tags page — visible on hover only */
   .inspector-tag-goto {
     width: 18px;
@@ -772,23 +986,24 @@
   }
 
   .entry-nav-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text-secondary);
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
-    transition: all 0.15s;
+    font-size: 18px;
+    line-height: 1;
+    transition: color 0.15s;
   }
 
-  .entry-nav-btn:hover { background: var(--bg-hover); color: var(--text); border-color: var(--text-tertiary); }
-  .entry-nav-btn:disabled { opacity: 0.3; cursor: default; }
-  .entry-nav-btn:disabled:hover { background: var(--bg); color: var(--text-secondary); border-color: var(--border); }
+  .entry-nav-btn:hover { color: var(--text); }
+  .entry-nav-btn:disabled { opacity: 0.2; cursor: default; }
+  .entry-nav-btn:disabled:hover { color: var(--text-tertiary); }
 
   /* Rendered markdown content */
   .entry-content {
@@ -2226,7 +2441,7 @@
         <div class="sidebar-logo disconnected" id="sidebar-logo"><span class="sidebar-logo-dot"></span></div>
         <div>
           <div class="sidebar-title" id="sidebar-brand-title">Entries</div>
-          <div class="sidebar-subtitle" id="sidebar-brand-subtitle">Connect a folder to save tags</div>
+          <div class="sidebar-subtitle" id="sidebar-brand-subtitle"><span id="sidebar-brand-subtitle-text">Connect a folder to start</span><button class="sidebar-refresh-btn" id="sidebar-refresh-btn" onclick="event.stopPropagation(); handleRefresh();" title="Refresh">&#8635;</button></div>
         </div>
       </div>
     </div>
@@ -2235,11 +2450,11 @@
       <div class="nav-section-label">Navigation</div>
       <div class="nav-item active" data-page="home" onclick="navigate('home')">
         <span class="nav-icon">&#9679;</span>
-        Library
+        <span class="nav-label">Library</span>
       </div>
       <div class="nav-item" data-page="tags" onclick="navigate('tags')">
         <span class="nav-icon">&#9873;</span>
-        Tags
+        <span class="nav-label">Tags</span>
         <span class="nav-badge" id="nav-tag-count">0</span>
       </div>
     </div>
@@ -2249,23 +2464,19 @@
       <div id="nav-notebooks"></div>
     </div>
 
-    <div class="nav-section">
-      <div class="nav-section-label">System</div>
-      <div class="nav-item" data-page="settings" onclick="navigate('settings')">
-        <span class="nav-icon">&#9881;</span>
-        Settings
-      </div>
-    </div>
-
     <div class="sidebar-footer" style="margin-top:auto;">
-      <button class="theme-toggle" onclick="handleRefresh()" id="refresh-btn">
-        <span class="nav-icon" id="refresh-icon">&#8635;</span>
-        <span id="refresh-label">Refresh</span>
+      <button class="collapse-toggle" onclick="toggleSidebarCollapse()" title="Collapse sidebar">
+        <span class="nav-icon collapse-icon">&#9668;</span>
+        <span class="collapse-label">Collapse</span>
       </button>
       <button class="theme-toggle" onclick="toggleTheme()">
         <span class="nav-icon" id="theme-icon">&#9790;</span>
         <span id="theme-label">Dark mode</span>
       </button>
+      <div class="nav-item" data-page="settings" onclick="navigate('settings')">
+        <span class="nav-icon">&#9881;</span>
+        <span class="nav-label">Settings</span>
+      </div>
     </div>
   </nav>
 
@@ -2555,9 +2766,33 @@ git push origin v0.2.0</code></pre>
   </div>
 
   <div class="inspector-card" id="inspector-card-entry">
-    <div class="inspector-card-title">Entry</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div class="inspector-card-title" style="margin-bottom:0;">Entry</div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <div class="autosave-indicator" id="autosave-indicator">
+          <span class="autosave-icon" id="autosave-icon" title="Auto-save enabled">&#128190;</span>
+        </div>
+        <button class="edit-mode-btn" id="edit-mode-btn" onclick="toggleEditMode()" title="Edit entry content">&#9998; Edit</button>
+      </div>
+    </div>
     <div id="inspector-entry-fields">
       <div class="inspector-tag-empty">Select an entry</div>
+    </div>
+    <div class="edit-toolbar" id="edit-toolbar">
+      <button class="edit-toolbar-btn bold" onclick="applyFormat('bold')" title="Bold (Ctrl+B)"><b>B</b></button>
+      <button class="edit-toolbar-btn italic" onclick="applyFormat('italic')" title="Italic (Ctrl+I)"><i>I</i></button>
+      <button class="edit-toolbar-btn" onclick="applyFormat('heading')" title="Heading">H</button>
+      <div class="edit-toolbar-sep"></div>
+      <button class="edit-toolbar-btn" onclick="applyFormat('list')" title="List">&bull;</button>
+      <button class="edit-toolbar-btn" onclick="applyFormat('blockquote')" title="Blockquote">&ldquo;</button>
+      <button class="edit-toolbar-btn" onclick="applyFormat('code')" title="Inline code">&lt;/&gt;</button>
+      <button class="edit-toolbar-btn" onclick="applyFormat('link')" title="Link">&#128279;</button>
+      <div class="edit-toolbar-sep"></div>
+      <button class="edit-toolbar-btn" onclick="applyFormat('hr')" title="Horizontal rule">&mdash;</button>
+    </div>
+    <div class="edit-undo-redo" id="edit-undo-redo">
+      <button class="edit-undo-redo-btn" id="edit-undo-btn" onclick="editUndo()" disabled title="Undo (Ctrl+Z)">&#8630; Undo</button>
+      <button class="edit-undo-redo-btn" id="edit-redo-btn" onclick="editRedo()" disabled title="Redo (Ctrl+Y)">&#8631; Redo</button>
     </div>
   </div>
 
@@ -3536,7 +3771,7 @@ function renderNotebookPages() {
     <div class="page" id="page-notebook-${nb.id}">
       <div class="page-header">
         <div class="page-title">${nb.name}</div>
-        <div class="page-tagline">${(notebookEntries[nb.id] || []).length} entries</div>
+        <div class="page-tagline"></div>
       </div>
 
       <div class="search-header" id="search-header-nb-${nb.id}">
@@ -3550,7 +3785,7 @@ function renderNotebookPages() {
           </div>
           <span class="search-header-close" onclick="closeSearchHeader('nb-${nb.id}'); filterNotebook('${nb.id}')">&times;</span>
         </div>
-        <span class="search-header-right">${(notebookEntries[nb.id] || []).length} entries</span>
+        <span class="search-header-right"></span>
       </div>
 
       <div class="notebook-content-wrapper" id="nb-wrapper-${nb.id}">
@@ -3686,6 +3921,9 @@ function toggleShowBackups(show) {
 }
 
 function renderDetailPanel(notebookId, index) {
+  // Exit edit mode when changing entries
+  if (_isEditMode) exitEditMode();
+
   const entries = notebookEntries[notebookId] || [];
   const entry = entries[index];
   if (!entry) return;
@@ -3711,8 +3949,8 @@ function renderDetailPanel(notebookId, index) {
         <div class="entry-day">${formatDate(entry.dateObj)}</div>
       </div>
       <div class="entry-nav-arrows">
-        <button class="entry-nav-btn" onclick="selectEntry('${notebookId}', ${prevIdx})" ${prevIdx === null ? 'disabled' : ''} title="Newer">&#9664;</button>
-        <button class="entry-nav-btn" onclick="selectEntry('${notebookId}', ${nextIdx})" ${nextIdx === null ? 'disabled' : ''} title="Older">&#9654;</button>
+        <button class="entry-nav-btn" onclick="selectEntry('${notebookId}', ${prevIdx})" ${prevIdx === null ? 'disabled' : ''} title="Newer">&#8249;</button>
+        <button class="entry-nav-btn" onclick="selectEntry('${notebookId}', ${nextIdx})" ${nextIdx === null ? 'disabled' : ''} title="Older">&#8250;</button>
       </div>
     </div>
     <div class="entry-content">${entry.html}</div>
@@ -3882,6 +4120,370 @@ function updateNotebookIcon(btnEl) {
   if (iconVal) iconVal.innerHTML = newIcon;
 }
 
+// ============================================================
+// EDIT MODE — inline markdown editing with auto-save & undo/redo
+// ============================================================
+
+let _isEditMode = false;
+let _editUndoStack = [];   // array of { body: string } snapshots
+let _editRedoStack = [];
+let _editSaveTimer = null;
+const EDIT_AUTOSAVE_DELAY = 1500; // ms debounce for auto-save
+let _editLastSavedBody = null;
+
+function toggleEditMode() {
+  if (_isEditMode) {
+    exitEditMode();
+  } else {
+    enterEditMode();
+  }
+}
+
+function enterEditMode() {
+  const readonly = isNotebookReadonly(_inspectorNotebookId);
+  if (readonly) return;
+  const entries = notebookEntries[_inspectorNotebookId] || [];
+  const entry = entries[_inspectorEntryIndex];
+  if (!entry) return;
+
+  _isEditMode = true;
+
+  // Push initial state onto undo stack
+  _editUndoStack = [{ body: entry.body }];
+  _editRedoStack = [];
+  _editLastSavedBody = entry.body;
+
+  // Toggle button state
+  const btn = document.getElementById('edit-mode-btn');
+  if (btn) { btn.classList.add('active'); btn.innerHTML = '&#10003; Editing'; }
+
+  // Show toolbar, undo/redo, autosave indicator
+  const toolbar = document.getElementById('edit-toolbar');
+  const undoRedo = document.getElementById('edit-undo-redo');
+  const autoInd = document.getElementById('autosave-indicator');
+  if (toolbar) toolbar.classList.add('visible');
+  if (undoRedo) undoRedo.classList.add('visible');
+  if (autoInd) { autoInd.className = 'autosave-indicator visible'; document.getElementById('autosave-icon').innerHTML = '&#128190;'; document.getElementById('autosave-icon').title = 'Auto-save enabled'; }
+
+  _updateUndoRedoButtons();
+
+  // Make the entry-content contentEditable and show raw markdown
+  const panel = document.getElementById(`detail-panel-${_inspectorNotebookId}`);
+  if (panel) {
+    const contentEl = panel.querySelector('.entry-content');
+    if (contentEl) {
+      contentEl.classList.add('editing');
+      contentEl.contentEditable = 'true';
+      // Show raw markdown for editing
+      contentEl.innerText = entry.body;
+      contentEl.focus();
+
+      // Listen for input to push undo snapshots and trigger autosave
+      contentEl._editInputHandler = () => _onEditInput();
+      contentEl.addEventListener('input', contentEl._editInputHandler);
+
+      // Keyboard shortcuts
+      contentEl._editKeyHandler = (e) => _onEditKeydown(e);
+      contentEl.addEventListener('keydown', contentEl._editKeyHandler);
+    }
+  }
+
+  // Disable tagging
+  const tagBtn = document.getElementById('tagging-mode-btn');
+  if (tagBtn) tagBtn.classList.add('disabled-by-edit');
+  // Clear any pending selection
+  pendingSelection = null;
+  updateTagButtonGlow();
+}
+
+function exitEditMode() {
+  if (!_isEditMode) return;
+
+  // Flush any pending save
+  if (_editSaveTimer) { clearTimeout(_editSaveTimer); _editSaveTimer = null; }
+  _saveEditContent();
+
+  _isEditMode = false;
+
+  // Toggle button state
+  const btn = document.getElementById('edit-mode-btn');
+  if (btn) { btn.classList.remove('active'); btn.innerHTML = '&#9998; Edit'; }
+
+  // Hide toolbar, undo/redo, autosave
+  const toolbar = document.getElementById('edit-toolbar');
+  const undoRedo = document.getElementById('edit-undo-redo');
+  const autoInd = document.getElementById('autosave-indicator');
+  if (toolbar) toolbar.classList.remove('visible');
+  if (undoRedo) undoRedo.classList.remove('visible');
+  if (autoInd) autoInd.classList.remove('visible');
+
+  // Restore entry-content to rendered HTML
+  const panel = document.getElementById(`detail-panel-${_inspectorNotebookId}`);
+  if (panel) {
+    const contentEl = panel.querySelector('.entry-content');
+    if (contentEl) {
+      contentEl.classList.remove('editing');
+      contentEl.contentEditable = 'false';
+      if (contentEl._editInputHandler) {
+        contentEl.removeEventListener('input', contentEl._editInputHandler);
+        delete contentEl._editInputHandler;
+      }
+      if (contentEl._editKeyHandler) {
+        contentEl.removeEventListener('keydown', contentEl._editKeyHandler);
+        delete contentEl._editKeyHandler;
+      }
+      // Re-render from the (now updated) entry body
+      const entries = notebookEntries[_inspectorNotebookId] || [];
+      const entry = entries[_inspectorEntryIndex];
+      if (entry) {
+        contentEl.innerHTML = entry.html;
+      }
+    }
+  }
+
+  // Re-enable tagging
+  const tagBtn = document.getElementById('tagging-mode-btn');
+  if (tagBtn) tagBtn.classList.remove('disabled-by-edit');
+
+  // Cleanup
+  _editUndoStack = [];
+  _editRedoStack = [];
+}
+
+function _onEditInput() {
+  const panel = document.getElementById(`detail-panel-${_inspectorNotebookId}`);
+  if (!panel) return;
+  const contentEl = panel.querySelector('.entry-content');
+  if (!contentEl) return;
+
+  const currentText = contentEl.innerText;
+
+  // Push undo snapshot (only if different from last)
+  const last = _editUndoStack[_editUndoStack.length - 1];
+  if (!last || last.body !== currentText) {
+    _editUndoStack.push({ body: currentText });
+    // Limit undo stack to 100 entries
+    if (_editUndoStack.length > 100) _editUndoStack.shift();
+    _editRedoStack = [];  // clear redo on new input
+    _updateUndoRedoButtons();
+  }
+
+  // Debounce auto-save
+  if (_editSaveTimer) clearTimeout(_editSaveTimer);
+  const autoInd = document.getElementById('autosave-indicator');
+  if (autoInd) { autoInd.className = 'autosave-indicator visible unsaved'; document.getElementById('autosave-icon').innerHTML = '&#9998;'; document.getElementById('autosave-icon').title = 'Unsaved changes...'; }
+
+  _editSaveTimer = setTimeout(() => {
+    _saveEditContent();
+  }, EDIT_AUTOSAVE_DELAY);
+}
+
+function _onEditKeydown(e) {
+  // Ctrl+Z = undo, Ctrl+Y or Ctrl+Shift+Z = redo
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault();
+    editUndo();
+  } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey) || (e.key === 'Z' && e.shiftKey))) {
+    e.preventDefault();
+    editRedo();
+  } else if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+    e.preventDefault();
+    applyFormat('bold');
+  } else if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+    e.preventDefault();
+    applyFormat('italic');
+  }
+}
+
+function editUndo() {
+  if (_editUndoStack.length <= 1) return; // first item is initial state
+  const current = _editUndoStack.pop();
+  _editRedoStack.push(current);
+
+  const prev = _editUndoStack[_editUndoStack.length - 1];
+  _restoreEditContent(prev.body);
+  _updateUndoRedoButtons();
+
+  // Trigger debounced save
+  if (_editSaveTimer) clearTimeout(_editSaveTimer);
+  _editSaveTimer = setTimeout(() => _saveEditContent(), EDIT_AUTOSAVE_DELAY);
+}
+
+function editRedo() {
+  if (_editRedoStack.length === 0) return;
+  const next = _editRedoStack.pop();
+  _editUndoStack.push(next);
+
+  _restoreEditContent(next.body);
+  _updateUndoRedoButtons();
+
+  if (_editSaveTimer) clearTimeout(_editSaveTimer);
+  _editSaveTimer = setTimeout(() => _saveEditContent(), EDIT_AUTOSAVE_DELAY);
+}
+
+function _restoreEditContent(body) {
+  const panel = document.getElementById(`detail-panel-${_inspectorNotebookId}`);
+  if (!panel) return;
+  const contentEl = panel.querySelector('.entry-content');
+  if (!contentEl) return;
+  contentEl.innerText = body;
+}
+
+function _updateUndoRedoButtons() {
+  const undoBtn = document.getElementById('edit-undo-btn');
+  const redoBtn = document.getElementById('edit-redo-btn');
+  if (undoBtn) undoBtn.disabled = _editUndoStack.length <= 1;
+  if (redoBtn) redoBtn.disabled = _editRedoStack.length === 0;
+}
+
+async function _saveEditContent() {
+  if (!_isEditMode) return;
+  const entries = notebookEntries[_inspectorNotebookId] || [];
+  const entry = entries[_inspectorEntryIndex];
+  if (!entry) return;
+
+  const panel = document.getElementById(`detail-panel-${_inspectorNotebookId}`);
+  if (!panel) return;
+  const contentEl = panel.querySelector('.entry-content');
+  if (!contentEl) return;
+
+  const newBody = contentEl.innerText;
+
+  // Skip if nothing changed
+  if (newBody === _editLastSavedBody) return;
+
+  const autoInd = document.getElementById('autosave-indicator');
+  if (autoInd) { autoInd.className = 'autosave-indicator visible saving'; document.getElementById('autosave-icon').innerHTML = '&#8635;'; document.getElementById('autosave-icon').title = 'Saving...'; }
+
+  const oldBody = entry.body;
+  entry.body = newBody;
+  entry.html = parseMd(newBody);
+  entry.preview = newBody.replace(/<[^>]*>/g, '').substring(0, 300);
+
+  // Update raw text storage and write to file
+  const nb = NOTEBOOKS.find(n => n.id === _inspectorNotebookId);
+  if (nb && nb.type === 'directory' && entry.sourceFile) {
+    const fileRaw = rawDirNotebookTexts[_inspectorNotebookId]?.[entry.sourceFile];
+    if (fileRaw) {
+      const newFileText = fileRaw.replace(oldBody, newBody);
+      rawDirNotebookTexts[_inspectorNotebookId][entry.sourceFile] = newFileText;
+      await writeNotebookFile(_inspectorNotebookId, newFileText, entry.sourceFile);
+    }
+  } else if (nb) {
+    const fullText = rawNotebookTexts[_inspectorNotebookId];
+    if (fullText) {
+      const newFullText = fullText.replace(oldBody, newBody);
+      rawNotebookTexts[_inspectorNotebookId] = newFullText;
+      await writeNotebookFile(_inspectorNotebookId, newFullText);
+    }
+  }
+
+  _editLastSavedBody = newBody;
+
+  // Rebuild tags index
+  allTags = {};
+  allEntries = [];
+  for (const nb2 of NOTEBOOKS) {
+    if (nb2.type === 'directory') {
+      const dirTexts = rawDirNotebookTexts[nb2.id];
+      if (dirTexts) {
+        const files = Object.entries(dirTexts).map(([name, text]) => ({ name, text }));
+        const parsed = parseDirectoryNotebook(files, nb2.id, nb2.name);
+        notebookEntries[nb2.id] = parsed;
+      }
+    } else {
+      const text = rawNotebookTexts[nb2.id];
+      if (text) {
+        const parsed = parseNotebook(text, nb2.id, nb2.name);
+        notebookEntries[nb2.id] = parsed;
+      }
+    }
+  }
+  allEntries = [];
+  for (const nb2 of NOTEBOOKS) allEntries.push(...(notebookEntries[nb2.id] || []));
+  allEntries.sort((a, b) => b.dateObj - a.dateObj);
+
+  // Update thumbnails
+  renderThumbnails(_inspectorNotebookId);
+
+  if (autoInd) {
+    autoInd.className = 'autosave-indicator visible saved';
+    document.getElementById('autosave-icon').innerHTML = '&#10003;';
+    document.getElementById('autosave-icon').title = 'Saved';
+    setTimeout(() => {
+      if (autoInd.classList.contains('saved')) {
+        autoInd.className = 'autosave-indicator visible';
+        document.getElementById('autosave-icon').innerHTML = '&#128190;';
+        document.getElementById('autosave-icon').title = 'Auto-save enabled';
+      }
+    }, 2000);
+  }
+}
+
+// ── Markdown formatting commands ──
+function applyFormat(type) {
+  if (!_isEditMode) return;
+  const panel = document.getElementById(`detail-panel-${_inspectorNotebookId}`);
+  if (!panel) return;
+  const contentEl = panel.querySelector('.entry-content');
+  if (!contentEl) return;
+
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+  // Only operate inside our editing content
+  if (!contentEl.contains(range.commonAncestorContainer)) return;
+
+  const selectedText = sel.toString();
+
+  let replacement = '';
+  switch (type) {
+    case 'bold':
+      replacement = selectedText ? `**${selectedText}**` : '**bold text**';
+      break;
+    case 'italic':
+      replacement = selectedText ? `*${selectedText}*` : '*italic text*';
+      break;
+    case 'heading':
+      replacement = selectedText ? `## ${selectedText}` : '## Heading';
+      break;
+    case 'list':
+      if (selectedText) {
+        replacement = selectedText.split('\n').map(l => `- ${l}`).join('\n');
+      } else {
+        replacement = '- List item';
+      }
+      break;
+    case 'blockquote':
+      if (selectedText) {
+        replacement = selectedText.split('\n').map(l => `> ${l}`).join('\n');
+      } else {
+        replacement = '> Quote';
+      }
+      break;
+    case 'code':
+      replacement = selectedText ? `\`${selectedText}\`` : '`code`';
+      break;
+    case 'link':
+      replacement = selectedText ? `[${selectedText}](url)` : '[link text](url)';
+      break;
+    case 'hr':
+      replacement = '\n---\n';
+      break;
+  }
+
+  // Insert the replacement text
+  range.deleteContents();
+  range.insertNode(document.createTextNode(replacement));
+
+  // Collapse selection after insertion
+  sel.collapseToEnd();
+
+  // Trigger input event to capture undo snapshot + autosave
+  contentEl.dispatchEvent(new Event('input'));
+}
+
 function updateInspector(notebookId, entryIndex) {
   _inspectorNotebookId = notebookId;
   _inspectorEntryIndex = entryIndex;
@@ -3914,10 +4516,15 @@ function updateInspector(notebookId, entryIndex) {
   // ── Entry card ──
   const entryFields = document.getElementById('inspector-entry-fields');
   const readonly = isNotebookReadonly(notebookId);
-  if (entryFields) {
-    const firstLine = entry.body.split('\n').find(l => l.trim()) || '';
-    const title = firstLine.replace(/^#+\s*/, '').replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '').substring(0, 120);
 
+  // Exit edit mode when switching entries
+  if (_isEditMode) exitEditMode();
+
+  // Hide/show edit button based on readonly
+  const editBtn = document.getElementById('edit-mode-btn');
+  if (editBtn) editBtn.style.display = readonly ? 'none' : '';
+
+  if (entryFields) {
     const dateField = readonly
       ? `<div class="inspector-editable"><span class="inspector-editable-value">${entry.date}</span></div>`
       : `<div class="inspector-editable" id="inspector-entry-date-display">
@@ -3931,10 +4538,6 @@ function updateInspector(notebookId, entryIndex) {
       <div class="inspector-field">
         <label class="inspector-label">Date</label>
         ${dateField}
-      </div>
-      <div class="inspector-field">
-        <label class="inspector-label">First line</label>
-        <div style="font-size:12px;color:var(--text-secondary);line-height:1.4;word-break:break-word;">${escapeHtml(title) || '<em style=color:var(--text-tertiary)>Empty entry</em>'}</div>
       </div>
       ${readonly ? `<div class="inspector-field"><button onclick="showCopyToNotebookDialog('${notebookId}', ${entryIndex})" style="width:100%;padding:6px 12px;border:1px solid var(--border);background:var(--card-bg);border-radius:6px;cursor:pointer;font-size:12px;">Copy to notebook&hellip;</button></div>` : ''}
     `;
@@ -4115,9 +4718,13 @@ function openEntryAndScrollToTag(notebookId, date, tagName) {
     if (tagSpan) {
       // Remove any previous highlight
       panel.querySelectorAll('.tag-highlight-flash').forEach(el => el.classList.remove('tag-highlight-flash'));
-      // Add highlight and scroll
+      // Add highlight and scroll within the detail panel only
       tagSpan.classList.add('tag-highlight-flash');
-      tagSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const detailPanel = panel.closest('.detail-panel') || panel;
+      const panelRect = detailPanel.getBoundingClientRect();
+      const spanRect = tagSpan.getBoundingClientRect();
+      const offset = spanRect.top - panelRect.top - (panelRect.height / 2) + (spanRect.height / 2);
+      detailPanel.scrollTo({ top: detailPanel.scrollTop + offset, behavior: 'smooth' });
       // Clean up after animation
       tagSpan.addEventListener('animationend', () => {
         tagSpan.classList.remove('tag-highlight-flash');
@@ -4222,13 +4829,23 @@ function highlightEntryMatches(notebookId, query, startIndex) {
 }
 
 /**
- * Move the "current" class to the match at `idx` and scroll to it.
+ * Move the "current" class to the match at `idx` and scroll within
+ * the detail-panel only (never the outer window).
  */
 function _setCurrentMatch(contentEl, idx) {
   if (!contentEl) return;
   const marks = contentEl.querySelectorAll('mark.find-match');
   marks.forEach((m, i) => m.classList.toggle('current', i === idx));
-  if (marks[idx]) marks[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (!marks[idx]) return;
+
+  // Scroll inside the .detail-panel, not the window
+  const panel = contentEl.closest('.detail-panel');
+  if (panel) {
+    const panelRect = panel.getBoundingClientRect();
+    const markRect = marks[idx].getBoundingClientRect();
+    const offset = markRect.top - panelRect.top - (panelRect.height / 2) + (markRect.height / 2);
+    panel.scrollTo({ top: panel.scrollTop + offset, behavior: 'smooth' });
+  }
 }
 
 /**
@@ -4396,6 +5013,22 @@ function navigate(page) {
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
 }
+
+function toggleSidebarCollapse() {
+  const sidebar = document.getElementById('sidebar');
+  const app = document.querySelector('.app');
+  const collapsed = sidebar.classList.toggle('collapsed');
+  app.classList.toggle('sidebar-collapsed', collapsed);
+  try { localStorage.setItem('sidebar-collapsed', collapsed ? '1' : ''); } catch(e) {}
+}
+
+// Restore collapsed state on load
+try {
+  if (localStorage.getItem('sidebar-collapsed')) {
+    document.getElementById('sidebar').classList.add('collapsed');
+    document.querySelector('.app').classList.add('sidebar-collapsed');
+  }
+} catch(e) {}
 
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -4872,6 +5505,10 @@ function updateTagButtonGlow() {
 }
 
 function handleTagButton() {
+  if (_isEditMode) {
+    showToast('Exit edit mode to tag text.');
+    return;
+  }
   if (pendingSelection) {
     openTagModal();
   } else {
@@ -4881,6 +5518,9 @@ function handleTagButton() {
 
 function setupSelectionToolbar() {
   document.addEventListener('mouseup', (e) => {
+    // Don't track selections for tagging while in edit mode
+    if (_isEditMode) return;
+
     const modalOverlay = document.getElementById('tag-modal-overlay');
 
     // Don't interfere if the click was on the modal
@@ -5176,6 +5816,13 @@ async function connectFolder() {
 }
 
 function updateFolderStatus(connected) {
+  // Derive a display name from the connected folder path
+  const folderName = IS_TAURI && rootFolder
+    ? '/' + rootFolder.split('/').filter(Boolean).pop() + ' connected'
+    : dirHandle
+      ? '/' + dirHandle.name + ' connected'
+      : '';
+
   // Update old bottom button (kept as fallback)
   const btn = document.getElementById('folder-status-btn');
   const label = document.getElementById('folder-status-label');
@@ -5183,18 +5830,18 @@ function updateFolderStatus(connected) {
     if (connected) {
       btn.classList.remove('disconnected');
       btn.classList.add('connected');
-      label.textContent = 'Folder connected';
+      label.textContent = folderName || 'Folder connected';
     } else {
       btn.classList.remove('connected');
       btn.classList.add('disconnected');
-      label.textContent = 'Connect folder to save tags';
+      label.textContent = 'Connect a folder to start';
     }
   }
 
   // Update sidebar brand area
   const logo = document.getElementById('sidebar-logo');
   const brand = document.getElementById('sidebar-brand');
-  const subtitle = document.getElementById('sidebar-brand-subtitle');
+  const subtitleText = document.getElementById('sidebar-brand-subtitle-text');
   if (logo) {
     if (connected) {
       logo.classList.remove('disconnected');
@@ -5204,11 +5851,11 @@ function updateFolderStatus(connected) {
       logo.classList.add('disconnected');
     }
   }
-  if (subtitle) {
-    subtitle.textContent = connected ? 'Folder connected' : 'Connect a folder to save tags';
+  if (subtitleText) {
+    subtitleText.textContent = connected ? (folderName || 'Folder connected') : 'Connect a folder to start';
   }
   if (brand) {
-    brand.title = connected ? 'Folder connected' : 'Click to connect a folder';
+    brand.title = connected ? (folderName || 'Folder connected') : 'Click to connect a folder';
     if (connected) {
       brand.classList.remove('disconnected');
       brand.classList.add('connected');
@@ -5773,15 +6420,14 @@ async function reload() {
 }
 
 async function handleRefresh() {
-  const icon = document.getElementById('refresh-icon');
-  const label = document.getElementById('refresh-label');
-  const btn = document.getElementById('refresh-btn');
+  const btn = document.getElementById('sidebar-refresh-btn');
 
   // Spin the icon and disable re-clicks while refreshing
-  btn.disabled = true;
-  icon.style.display = 'inline-block';
-  icon.style.animation = 'spin 0.6s linear infinite';
-  label.textContent = 'Refreshing…';
+  if (btn) {
+    btn.disabled = true;
+    btn.style.display = 'inline-flex';
+    btn.style.animation = 'spin 0.6s linear infinite';
+  }
 
   try {
     await reload();
@@ -5790,9 +6436,10 @@ async function handleRefresh() {
     console.error('Refresh failed:', e);
     showToast('Refresh failed — check console');
   } finally {
-    icon.style.animation = '';
-    label.textContent = 'Refresh';
-    btn.disabled = false;
+    if (btn) {
+      btn.style.animation = '';
+      btn.disabled = false;
+    }
   }
 }
 
