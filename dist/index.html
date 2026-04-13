@@ -49,6 +49,18 @@
     --font-serif: Georgia, 'Times New Roman', 'Iowan Old Style', serif;
     --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    /* ── Semantic UI layer ──────────────────────────────────────
+       These vars map intent → palette. Themes override only these.
+       surface  = overall page background
+       drawer   = sidebar / navigation rail
+       paper    = content surfaces (entry pane, thumb list, inspector cards)
+    */
+    --ui-surface-bg:    var(--bg);
+    --ui-drawer-bg:     var(--bg-nav);
+    --ui-drawer-border: var(--border);
+    --ui-paper-bg:      var(--bg-card);
+    --ui-paper-border:  var(--border);
+    --ui-paper-shadow:  var(--shadow-md);
   }
 
   [data-theme="dark"] {
@@ -80,6 +92,152 @@
     --shadow-sm: none;
     --shadow: 0 1px 2px rgba(0,0,0,0.15);
     --shadow-md: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  /* ── Semantic UI attribute selectors ────────────────────────
+     Themes target [data-ui="surface|drawer|paper"] rather than
+     individual class names. These rules consume the semantic vars.
+  */
+  [data-ui="surface"] {
+    background: var(--ui-surface-bg);
+  }
+
+  [data-ui="drawer"] {
+    background: var(--ui-drawer-bg);
+    border-color: var(--ui-drawer-border);
+  }
+
+  [data-ui="paper"] {
+    background: var(--ui-paper-bg);
+    border-color: var(--ui-paper-border);
+    box-shadow: var(--ui-paper-shadow);
+  }
+
+  /* ── Texture overlays (enabled via [data-texture="on"]) ─────
+     Each layer uses a pseudo-element so it composites over the
+     background colour without affecting children or text.
+     Opacity is intentionally very low — barely perceptible.
+  */
+
+  /* Linen / paper — fine cross-hatch threads
+     isolation:isolate creates a stacking context so z-index:-1 on ::before
+     stays inside the card and doesn't escape to the page root. */
+  [data-texture="on"] [data-ui="paper"] {
+    position: relative;
+    isolation: isolate;
+  }
+  [data-texture="on"] [data-ui="paper"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    border-radius: inherit;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(120,110,100,0.025) 3px,
+        rgba(120,110,100,0.025) 4px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 5px,
+        rgba(120,110,100,0.018) 5px,
+        rgba(120,110,100,0.018) 6px
+      );
+    mix-blend-mode: multiply;
+  }
+  [data-theme="dark"][data-texture="on"] [data-ui="paper"]::before {
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(200,195,185,0.025) 3px,
+        rgba(200,195,185,0.025) 4px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 5px,
+        rgba(200,195,185,0.018) 5px,
+        rgba(200,195,185,0.018) 6px
+      );
+    mix-blend-mode: soft-light;
+  }
+
+  /* Rock / stone — irregular dappled noise
+     Uses position:fixed so the body pseudo-element doesn't extend the document. */
+  [data-texture="on"] [data-ui="surface"]::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    mix-blend-mode: multiply;
+  }
+  [data-theme="dark"][data-texture="on"] [data-ui="surface"]::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.09'/%3E%3C/svg%3E");
+    mix-blend-mode: soft-light;
+  }
+
+  /* Wood grain — long horizontal streaks
+     The sidebar is already position:fixed with z-index:100, forming its own
+     stacking context, so z-index:-1 on ::before stays inside it. */
+  [data-texture="on"] [data-ui="drawer"]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    border-radius: inherit;
+    background-image:
+      repeating-linear-gradient(
+        2deg,
+        transparent,
+        transparent 7px,
+        rgba(110,90,65,0.022) 7px,
+        rgba(110,90,65,0.022) 8px,
+        transparent 8px,
+        transparent 14px,
+        rgba(110,90,65,0.015) 14px,
+        rgba(110,90,65,0.015) 15px
+      ),
+      repeating-linear-gradient(
+        178deg,
+        transparent,
+        transparent 22px,
+        rgba(100,80,55,0.012) 22px,
+        rgba(100,80,55,0.012) 23px
+      );
+    mix-blend-mode: multiply;
+  }
+  [data-theme="dark"][data-texture="on"] [data-ui="drawer"]::before {
+    background-image:
+      repeating-linear-gradient(
+        2deg,
+        transparent,
+        transparent 7px,
+        rgba(200,180,150,0.025) 7px,
+        rgba(200,180,150,0.025) 8px,
+        transparent 8px,
+        transparent 14px,
+        rgba(200,180,150,0.018) 14px,
+        rgba(200,180,150,0.018) 15px
+      ),
+      repeating-linear-gradient(
+        178deg,
+        transparent,
+        transparent 22px,
+        rgba(190,170,140,0.015) 22px,
+        rgba(190,170,140,0.015) 23px
+      );
+    mix-blend-mode: soft-light;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -216,6 +374,61 @@
     margin-bottom: 4px;
   }
 
+  .nav-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    margin-bottom: 4px;
+  }
+
+  .nav-section-header .nav-section-label {
+    padding: 0;
+    margin-bottom: 0;
+  }
+
+  .nav-add-btn {
+    width: 18px;
+    height: 18px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: var(--radius);
+    font-size: 15px;
+    line-height: 18px;
+    text-align: center;
+    padding: 0;
+    transition: all 0.15s ease;
+  }
+
+  .nav-add-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+  }
+
+  .sidebar.collapsed .nav-add-btn { display: none; }
+
+  .new-entry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+  }
+
+  .new-entry-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
   .nav-item {
     display: flex;
     align-items: center;
@@ -259,12 +472,21 @@
     font-weight: 500;
     padding: 2px 7px;
     border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
   }
 
-  .nav-item.active .nav-badge { background: var(--accent); color: white; opacity: 0.75; }
+  .nav-item:hover .nav-badge { opacity: 1; }
+  .nav-item.active .nav-badge { background: var(--accent); color: white; opacity: 0; }
+  .nav-item.active:hover .nav-badge { opacity: 0.75; }
+
+  .sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
 
   .sidebar-footer {
-    margin-top: auto;
     padding: 8px 12px;
     border-top: 1px solid var(--border);
   }
@@ -289,7 +511,7 @@
   .theme-toggle:hover { background: var(--bg-hover); color: var(--text); }
 
   /* Sidebar collapse */
-  .sidebar { transition: width 0.2s ease, transform 0.2s ease; overflow: hidden; }
+  .sidebar { transition: width 0.2s ease, transform 0.2s ease; overflow-x: hidden; overflow-y: auto; }
   .sidebar.collapsed { width: 56px; }
 
   /* Hide text labels but keep icons */
@@ -1795,7 +2017,11 @@
     max-width: 50%;
     transition: border-color 0.15s;
   }
-  .search-header-input-wrap.open { display: flex; }
+  @keyframes searchBarReveal {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .search-header-input-wrap.open { display: flex; animation: searchBarReveal 0.2s ease-out; }
   .search-header-input-wrap:focus-within { border-color: var(--text-tertiary); }
   .search-header-input-wrap input {
     flex: 1;
@@ -2420,7 +2646,7 @@
     .main.has-inspector { max-width: 1200px; }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 600px) {
     .sidebar { transform: translateX(-100%); }
     .sidebar.open { transform: translateX(0); }
     .main { margin-left: 0; padding: 20px; padding-top: 56px; max-width: 100%; }
@@ -2429,13 +2655,13 @@
   }
 </style>
 </head>
-<body>
+<body data-ui="surface">
 
 <button class="mobile-toggle" onclick="toggleSidebar()">&#9776;</button>
 
 <div class="app">
   <!-- Sidebar -->
-  <nav class="sidebar" id="sidebar">
+  <nav class="sidebar" id="sidebar" data-ui="drawer">
     <div class="sidebar-header">
       <div class="sidebar-brand disconnected" id="sidebar-brand" onclick="connectFolder()" style="cursor:pointer;" title="Click to connect a folder">
         <div class="sidebar-logo disconnected" id="sidebar-logo"><span class="sidebar-logo-dot"></span></div>
@@ -2446,25 +2672,30 @@
       </div>
     </div>
 
-    <div class="nav-section">
-      <div class="nav-section-label">Navigation</div>
-      <div class="nav-item active" data-page="home" onclick="navigate('home')">
-        <span class="nav-icon">&#9679;</span>
-        <span class="nav-label">Library</span>
+    <div class="sidebar-scroll">
+      <div class="nav-section">
+        <div class="nav-section-label">Navigation</div>
+        <div class="nav-item active" data-page="home" onclick="navigate('home')">
+          <span class="nav-icon">&#9679;</span>
+          <span class="nav-label">Library</span>
+        </div>
+        <div class="nav-item" data-page="tags" onclick="navigate('tags')">
+          <span class="nav-icon">&#9873;</span>
+          <span class="nav-label">Tags</span>
+          <span class="nav-badge" id="nav-tag-count">0</span>
+        </div>
       </div>
-      <div class="nav-item" data-page="tags" onclick="navigate('tags')">
-        <span class="nav-icon">&#9873;</span>
-        <span class="nav-label">Tags</span>
-        <span class="nav-badge" id="nav-tag-count">0</span>
+
+      <div class="nav-section">
+        <div class="nav-section-header">
+          <div class="nav-section-label">Notebooks</div>
+          <button class="nav-add-btn" onclick="showCreateNotebookDialog()" title="New notebook">+</button>
+        </div>
+        <div id="nav-notebooks"></div>
       </div>
     </div>
 
-    <div class="nav-section">
-      <div class="nav-section-label">Notebooks</div>
-      <div id="nav-notebooks"></div>
-    </div>
-
-    <div class="sidebar-footer" style="margin-top:auto;">
+    <div class="sidebar-footer">
       <button class="collapse-toggle" onclick="toggleSidebarCollapse()" title="Collapse sidebar">
         <span class="nav-icon collapse-icon">&#9668;</span>
         <span class="collapse-label">Collapse</span>
@@ -2493,7 +2724,7 @@
       <div class="stats-row" id="home-stats"></div>
 
       <div class="search-header" id="search-header-home">
-        <span class="search-header-icon" onclick="toggleSearchHeader('home')" title="Search notes">&#128269;</span>
+        <span class="search-header-icon" onclick="toggleSearchHeader('home')" title="Search notes"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
         <div class="search-header-input-wrap" id="search-input-wrap-home">
           <input id="timeline-search" type="text" placeholder="Search notes..." oninput="renderTimeline()">
           <span class="search-header-close" onclick="closeSearchHeader('home')">&times;</span>
@@ -2517,7 +2748,7 @@
       </div>
 
       <div class="search-header" id="search-header-tags">
-        <span class="search-header-icon" onclick="toggleSearchHeader('tags')" title="Search tags">&#128269;</span>
+        <span class="search-header-icon" onclick="toggleSearchHeader('tags')" title="Search tags"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
         <div class="search-header-input-wrap" id="search-input-wrap-tags">
           <input id="tags-search-input" type="text" placeholder="Filter tags..." oninput="onTagSearchHeaderInput(this.value)">
           <span class="search-header-close" onclick="closeSearchHeader('tags')">&times;</span>
@@ -2607,6 +2838,20 @@
           </div>
 
           <div id="import-result" class="import-result" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- ── APPEARANCE ── -->
+
+      <div class="settings-section" style="border-left: 3px solid var(--purple); border-color: var(--purple);">
+        <h2>Appearance</h2>
+        <p>Visual tweaks for the interface.</p>
+        <div class="import-setting" style="margin-top: 12px;">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;">
+            <input type="checkbox" id="texture-toggle" onchange="toggleTexture()" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
+            <span>Texture</span>
+          </label>
+          <span class="import-hint">Adds a subtle tactile texture to UI surfaces — linen on content panels, stone on the background, and wood grain on the sidebar.</span>
         </div>
       </div>
 
@@ -2736,7 +2981,7 @@ git push origin v0.2.0</code></pre>
 
 <!-- Floating inspector cards -->
 <div class="inspector-cards hidden" id="inspector-cards">
-  <div class="inspector-card" id="inspector-card-notebook">
+  <div class="inspector-card" id="inspector-card-notebook" data-ui="paper">
     <div class="inspector-card-title">Notebook</div>
     <div class="inspector-field">
       <label class="inspector-label">Name</label>
@@ -2765,7 +3010,7 @@ git push origin v0.2.0</code></pre>
     </div>
   </div>
 
-  <div class="inspector-card" id="inspector-card-entry">
+  <div class="inspector-card" id="inspector-card-entry" data-ui="paper">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="inspector-card-title" style="margin-bottom:0;">Entry</div>
       <div style="display:flex;align-items:center;gap:4px;">
@@ -2796,7 +3041,7 @@ git push origin v0.2.0</code></pre>
     </div>
   </div>
 
-  <div class="inspector-card" id="inspector-card-tags">
+  <div class="inspector-card" id="inspector-card-tags" data-ui="paper">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div class="inspector-card-title" style="margin-bottom:0;">Tags</div>
       <button class="tagging-mode-btn" id="tagging-mode-btn" onclick="handleTagButton()" title="Highlight text in an entry, then click to tag it">&#9873; Tag</button>
@@ -2987,61 +3232,126 @@ async function discoverNotebooks() {
   let fileNotebooks = [];
   let dirNotebooks = [];
 
-  // ── Tauri path: use built-in plugin-fs for filesystem access ──
-  // This works with ANY version of the Tauri binary — no custom Rust commands needed.
+  // ── Tauri path: use custom Rust commands for reliable filesystem access ──
+  // Custom commands return simple string arrays and avoid plugin-fs DirEntry
+  // serialisation issues (isFile/isDirectory may be missing in some plugin versions).
   if (IS_TAURI && rootFolder) {
+    // Strategy: try the dedicated Rust commands first (most reliable),
+    // then fall back to plugin-fs if the commands aren't available.
+    let usedCustomCommands = false;
     try {
       const entriesPath = rootFolder + '/entries';
-      const dirEntries = await tauriReadDir(entriesPath);
 
-      for (const entry of dirEntries) {
-        if (entry.isFile && entry.name.endsWith('.md')
-            && entry.name !== 'SCHEMA.md' && entry.name !== 'SYSTEM.md') {
-          // Single-file notebook
-          fileNotebooks.push({
-            id: notebookIdFromFilename(entry.name),
-            file: `entries/${entry.name}`,
-            name: notebookNameFromFilename(entry.name),
-            absPath: entriesPath + '/' + entry.name,
-            type: 'file',
-          });
-        } else if (entry.isDirectory && !entry.name.startsWith('.')) {
-          // Potential directory notebook — check for .md files inside
-          try {
-            const subPath = entriesPath + '/' + entry.name;
-            const subEntries = await tauriReadDir(subPath);
-            const mdFiles = subEntries.filter(f =>
-              f.isFile && f.name.endsWith('.md') && !f.name.endsWith('.backup.md')
-            );
-            if (mdFiles.length > 0) {
-              dirNotebooks.push({
-                id: 'dir-' + notebookIdFromFilename(entry.name),
-                file: `entries/${entry.name}`,
-                name: notebookNameFromFilename(entry.name),
-                absDir: subPath,
-                dirName: entry.name,
-                type: 'directory',
-                readonly: entry.name === getImportNotebookName(),
-                entryFiles: mdFiles.map(f => ({
-                  name: f.name,
-                  absPath: subPath + '/' + f.name,
-                })),
-              });
-            }
-          } catch (e) {
-            console.info(`Skipping inaccessible directory "${entry.name}":`, e);
+      // ── Primary: custom Rust commands ──
+      const [mdFiles, mdDirs] = await Promise.all([
+        tauriInvoke('list_notebooks', { root: rootFolder }),
+        tauriInvoke('list_notebook_dirs', { root: rootFolder }),
+      ]);
+      usedCustomCommands = true;
+
+      // Single-file notebooks
+      for (const name of mdFiles) {
+        fileNotebooks.push({
+          id: notebookIdFromFilename(name),
+          file: `entries/${name}`,
+          name: notebookNameFromFilename(name),
+          absPath: entriesPath + '/' + name,
+          type: 'file',
+        });
+      }
+
+      // Directory notebooks
+      for (const dirName of mdDirs) {
+        try {
+          const dirFiles = await tauriInvoke('list_dir_entries', { root: rootFolder, dirName });
+          const subPath = entriesPath + '/' + dirName;
+          if (dirFiles.length > 0) {
+            dirNotebooks.push({
+              id: 'dir-' + notebookIdFromFilename(dirName),
+              file: `entries/${dirName}`,
+              name: notebookNameFromFilename(dirName),
+              absDir: subPath,
+              dirName: dirName,
+              type: 'directory',
+              readonly: dirName === getImportNotebookName(),
+              entryFiles: dirFiles.map(f => ({
+                name: f,
+                absPath: subPath + '/' + f,
+              })),
+            });
           }
+        } catch (e) {
+          console.info(`Skipping inaccessible directory "${dirName}":`, e);
         }
       }
-
-      const all = [...fileNotebooks, ...dirNotebooks];
-      if (all.length > 0) {
-        NOTEBOOKS = all.map((nb, i) => ({ ...nb, icon: NB_ICONS[i % NB_ICONS.length] }));
-        console.info(`Discovered ${fileNotebooks.length} file notebook(s) and ${dirNotebooks.length} directory notebook(s) via Tauri`);
-        return;
-      }
     } catch (e) {
-      console.error('[discover] Tauri plugin-fs discovery failed:', e);
+      // Custom commands not available — fall back to plugin-fs
+      console.info('[discover] Custom commands unavailable, trying plugin-fs:', e.message || e);
+      fileNotebooks = [];
+      dirNotebooks = [];
+    }
+
+    // ── Fallback: plugin-fs (works even with older Tauri binaries) ──
+    if (!usedCustomCommands) {
+      try {
+        const entriesPath = rootFolder + '/entries';
+        const dirEntries = await tauriReadDir(entriesPath);
+
+        for (const entry of dirEntries) {
+          // Support both { isFile } and { is_file } property naming
+          const isFile = entry.isFile ?? entry.is_file ?? false;
+          const isDir = entry.isDirectory ?? entry.is_directory ?? false;
+          const name = entry.name ?? '';
+
+          if (isFile && name.endsWith('.md')
+              && name !== 'SCHEMA.md' && name !== 'SYSTEM.md') {
+            fileNotebooks.push({
+              id: notebookIdFromFilename(name),
+              file: `entries/${name}`,
+              name: notebookNameFromFilename(name),
+              absPath: entriesPath + '/' + name,
+              type: 'file',
+            });
+          } else if (isDir && !name.startsWith('.')) {
+            try {
+              const subPath = entriesPath + '/' + name;
+              const subEntries = await tauriReadDir(subPath);
+              const mdFiles = subEntries.filter(f => {
+                const fIsFile = f.isFile ?? f.is_file ?? false;
+                const fName = f.name ?? '';
+                return fIsFile && fName.endsWith('.md') && !fName.endsWith('.backup.md');
+              });
+              if (mdFiles.length > 0) {
+                dirNotebooks.push({
+                  id: 'dir-' + notebookIdFromFilename(name),
+                  file: `entries/${name}`,
+                  name: notebookNameFromFilename(name),
+                  absDir: subPath,
+                  dirName: name,
+                  type: 'directory',
+                  readonly: name === getImportNotebookName(),
+                  entryFiles: mdFiles.map(f => ({
+                    name: f.name ?? '',
+                    absPath: subPath + '/' + (f.name ?? ''),
+                  })),
+                });
+              }
+            } catch (e) {
+              console.info(`Skipping inaccessible directory "${name}":`, e);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('[discover] Tauri plugin-fs discovery also failed:', e);
+      }
+    }
+
+    const all = [...fileNotebooks, ...dirNotebooks];
+    all.sort((a, b) => a.name.localeCompare(b.name));
+    if (all.length > 0) {
+      NOTEBOOKS = all.map((nb, i) => ({ ...nb, icon: NB_ICONS[i % NB_ICONS.length] }));
+      console.info(`Discovered ${fileNotebooks.length} file notebook(s) and ${dirNotebooks.length} directory notebook(s) via Tauri`);
+      return;
     }
   }
 
@@ -3745,15 +4055,15 @@ function renderHomeStats() {
   const latestDate = allEntries.length > 0 ? formatShortDate(allEntries[0].dateObj) : '—';
 
   document.getElementById('home-stats').innerHTML = `
-    <div class="stat-card">
+    <div class="stat-card" data-ui="paper">
       <div class="stat-value">${totalEntries}</div>
       <div class="stat-label">Total entries</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" data-ui="paper">
       <div class="stat-value">${totalNotebooks}</div>
       <div class="stat-label">Notebooks</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" data-ui="paper">
       <div class="stat-value" style="font-size:16px;padding-top:6px;">${latestDate}</div>
       <div class="stat-label">Latest entry</div>
     </div>
@@ -3783,7 +4093,7 @@ function renderTimeline() {
   }
 
   container.innerHTML = `<div class="library-grid">` + filtered.map((entry, i) => `
-    <div class="library-card" onclick="_pendingFindQuery = getLibrarySearchQuery(); openEntry('${entry.notebook}', '${entry.date}')">
+    <div class="library-card" data-ui="paper" onclick="_pendingFindQuery = getLibrarySearchQuery(); openEntry('${entry.notebook}', '${entry.date}')">
       <div class="library-card-date">${formatShortDate(entry.dateObj)}</div>
       <div class="library-card-preview">${escapeHtml(entry.preview)}</div>
       <div class="library-card-source">${entry.notebookName}</div>
@@ -3801,15 +4111,23 @@ function renderNotebookPages() {
     inspectorCards.classList.add('hidden');
   }
 
-  container.innerHTML = NOTEBOOKS.map(nb => `
+  container.innerHTML = NOTEBOOKS.map(nb => {
+    const canAddEntry = !nb.readonly;
+    const newEntryBtn = canAddEntry
+      ? `<button class="new-entry-btn" onclick="showCreateEntryDialog('${nb.id}')" title="New entry">+ New Entry</button>`
+      : '';
+    return `
     <div class="page" id="page-notebook-${nb.id}">
       <div class="page-header">
-        <div class="page-title">${nb.name}</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="page-title">${nb.name}</div>
+          ${newEntryBtn}
+        </div>
         <div class="page-tagline"></div>
       </div>
 
       <div class="search-header" id="search-header-nb-${nb.id}">
-        <span class="search-header-icon" onclick="toggleSearchHeader('nb-${nb.id}')" title="Search this notebook (${navigator.platform.match(/Mac/) ? '⌘' : 'Ctrl+'}F)">&#128269;</span>
+        <span class="search-header-icon" onclick="toggleSearchHeader('nb-${nb.id}')" title="Search this notebook (${navigator.platform.match(/Mac/) ? '⌘' : 'Ctrl+'}F)"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
         <div class="search-header-input-wrap" id="search-input-wrap-nb-${nb.id}">
           <input id="search-${nb.id}" type="text" placeholder="Search this notebook..." oninput="onNotebookSearchInput('${nb.id}')">
           <div class="match-nav" id="match-nav-${nb.id}">
@@ -3823,8 +4141,8 @@ function renderNotebookPages() {
       </div>
 
       <div class="notebook-content-wrapper" id="nb-wrapper-${nb.id}">
-        <div class="thumb-panel" id="thumb-panel-${nb.id}"></div>
-        <div class="slideshow-layout" id="slideshow-${nb.id}">
+        <div class="thumb-panel" id="thumb-panel-${nb.id}" data-ui="paper"></div>
+        <div class="slideshow-layout" id="slideshow-${nb.id}" data-ui="paper">
           <div class="detail-panel" id="detail-panel-${nb.id}">
             <div class="detail-panel-empty">
               <div class="empty-icon">&#128196;</div>
@@ -3834,7 +4152,7 @@ function renderNotebookPages() {
         </div>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 
   // Render thumbnails and restore previously selected entry (or default to first)
   NOTEBOOKS.forEach(nb => {
@@ -5096,6 +5414,27 @@ function toggleTheme() {
 })();
 
 // ============================================================
+// TEXTURE TOGGLE
+// ============================================================
+
+function toggleTexture() {
+  const on = document.getElementById('texture-toggle').checked;
+  document.documentElement.setAttribute('data-texture', on ? 'on' : 'off');
+  try { localStorage.setItem('texture', on ? 'on' : 'off'); } catch(e) {}
+}
+
+(function() {
+  try {
+    const saved = localStorage.getItem('texture');
+    if (saved === 'on') {
+      document.documentElement.setAttribute('data-texture', 'on');
+      const cb = document.getElementById('texture-toggle');
+      if (cb) cb.checked = true;
+    }
+  } catch(e) {}
+})();
+
+// ============================================================
 // UNIVERSAL SEARCH-HEADER (toggle / close)
 // ============================================================
 
@@ -5218,7 +5557,7 @@ function renderTagFolders() {
   } else {
     html += '<div class="tags-folder-grid">' +
       tagNames.map(t => `
-        <div class="tag-folder" onclick="filterTags('${t}')" title="${allTags[t].length} item${allTags[t].length !== 1 ? 's' : ''}">
+        <div class="tag-folder" data-ui="paper" onclick="filterTags('${t}')" title="${allTags[t].length} item${allTags[t].length !== 1 ? 's' : ''}">
           <div class="tag-folder-name">${t}</div>
           <div class="tag-folder-count">${allTags[t].length} item${allTags[t].length !== 1 ? 's' : ''}</div>
         </div>`
@@ -5309,7 +5648,7 @@ function renderTagDetail(tagName) {
       const isSelected = tagRemoveSelected.has(origIdx);
       if (tagRemoveMode) {
         html += `
-          <div class="tag-item-card selectable ${isSelected ? 'selected' : ''}" onclick="toggleTagRemoveCard(${origIdx})">
+          <div class="tag-item-card selectable ${isSelected ? 'selected' : ''}" data-ui="paper" onclick="toggleTagRemoveCard(${origIdx})">
             <div class="tag-card-check">${isSelected ? '&#10003;' : ''}</div>
             <div class="tag-item-card-text">${escapeHtml(plainText)}</div>
             <div class="tag-item-card-meta">${sourceName} &middot; <span class="card-date">${item.date}</span></div>
@@ -5317,7 +5656,7 @@ function renderTagDetail(tagName) {
       } else {
         // Use openEntryAndScrollToTag to jump directly to the tagged text
         html += `
-          <div class="tag-item-card">
+          <div class="tag-item-card" data-ui="paper">
             <button class="tag-item-card-go" data-nb="${item.notebookId}" data-date="${item.date}" data-tagname="${safeTagAttr}" onclick="openEntryAndScrollToTag(this.dataset.nb, this.dataset.date, this.dataset.tagname)" title="Go to tagged text">&nearr;</button>
             <div class="tag-item-card-text">${escapeHtml(plainText)}</div>
             <div class="tag-item-card-meta">${sourceName} &middot; <span class="card-date">${item.date}</span></div>
@@ -6302,6 +6641,266 @@ async function runAppleNotesImport() {
 }
 
 // ============================================================
+// CREATE NOTEBOOK
+// ============================================================
+
+function showCreateNotebookDialog() {
+  if (!rootFolder && !dirHandle) {
+    showToast('Connect a folder first');
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'create-notebook-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  overlay.innerHTML = `
+    <div style="background:var(--bg-card,white);border-radius:12px;padding:24px;width:340px;max-width:90vw;box-shadow:0 8px 30px rgba(0,0,0,0.2);font-family:inherit;">
+      <div style="font-weight:600;font-size:15px;margin-bottom:12px;">New Notebook</div>
+      <input id="new-notebook-name" type="text" placeholder="Notebook name" autofocus
+        style="width:100%;padding:8px 12px;border:1px solid var(--border);background:var(--bg-input);border-radius:6px;font-size:14px;color:var(--text);outline:none;font-family:inherit;">
+      <div id="create-notebook-error" style="display:none;font-size:12px;color:var(--red);margin-top:6px;"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="this.closest('#create-notebook-overlay').remove()"
+          style="flex:1;padding:8px;border:1px solid var(--border);background:transparent;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-secondary);font-family:inherit;">Cancel</button>
+        <button id="create-notebook-submit" onclick="submitCreateNotebook()"
+          style="flex:1;padding:8px;border:none;background:var(--accent);color:white;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;">Create</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  const input = document.getElementById('new-notebook-name');
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitCreateNotebook();
+    if (e.key === 'Escape') overlay.remove();
+  });
+  setTimeout(() => input.focus(), 50);
+}
+
+async function submitCreateNotebook() {
+  const input = document.getElementById('new-notebook-name');
+  const errorEl = document.getElementById('create-notebook-error');
+  const name = (input.value || '').trim();
+
+  if (!name) {
+    errorEl.textContent = 'Please enter a name';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  // Derive the directory slug
+  const dirName = name.toLowerCase().replace(/[^a-z0-9\s\-_]/g, '').replace(/\s+/g, '-');
+  if (!dirName) {
+    errorEl.textContent = 'Name must contain at least one letter or number';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  // Check for duplicates against existing notebooks
+  const existingId = 'dir-' + notebookIdFromFilename(dirName);
+  if (NOTEBOOKS.find(nb => nb.id === existingId || nb.id === dirName)) {
+    errorEl.textContent = 'A notebook with this name already exists';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  const overlay = document.getElementById('create-notebook-overlay');
+
+  try {
+    if (IS_TAURI && rootFolder) {
+      // Use the Tauri command
+      await tauriInvoke('create_notebook', { root: rootFolder, name });
+    } else if (dirHandle) {
+      // Browser File System Access API path
+      const entriesDir = await dirHandle.getDirectoryHandle('entries');
+      const newDir = await entriesDir.getDirectoryHandle(dirName, { create: true });
+
+      // Create initial entry file
+      const today = new Date();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      const datePrefix = `${yyyy}-${mm}-${dd}`;
+      const dateHeading = `${mm}-${dd}-${yyyy}`;
+      const fileName = `${datePrefix} New Entry.md`;
+      const fileHandle = await newDir.getFileHandle(fileName, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(`# ${dateHeading}\n\n`);
+      await writable.close();
+    } else {
+      showToast('Connect a folder first');
+      return;
+    }
+
+    if (overlay) overlay.remove();
+    showToast(`Created "${name}"`);
+    try {
+      await reload();
+    } catch (reloadErr) {
+      console.error('Reload after notebook creation failed:', reloadErr);
+      showToast('Notebook created but failed to refresh — try the refresh button');
+    }
+    // Navigate to the new notebook
+    navigate('notebook-dir-' + dirName);
+  } catch (e) {
+    // Dialog might still be open (creation failed) or already removed
+    if (errorEl && document.body.contains(errorEl)) {
+      errorEl.textContent = String(e);
+      errorEl.style.display = 'block';
+    } else {
+      console.error('Create notebook failed:', e);
+      showToast('Failed to create notebook: ' + String(e));
+    }
+  }
+}
+
+// ============================================================
+// CREATE ENTRY (in directory notebooks)
+// ============================================================
+
+function showCreateEntryDialog(notebookId) {
+  const nb = NOTEBOOKS.find(n => n.id === notebookId);
+  if (!nb || nb.readonly) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'create-entry-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+  const today = new Date();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const yyyy = today.getFullYear();
+  const defaultDate = `${yyyy}-${mm}-${dd}`;
+
+  overlay.innerHTML = `
+    <div style="background:var(--bg-card,white);border-radius:12px;padding:24px;width:340px;max-width:90vw;box-shadow:0 8px 30px rgba(0,0,0,0.2);font-family:inherit;">
+      <div style="font-weight:600;font-size:15px;margin-bottom:12px;">New Entry</div>
+      <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Title</label>
+      <input id="new-entry-title" type="text" placeholder="Entry title (optional)" autofocus
+        style="width:100%;padding:8px 12px;border:1px solid var(--border);background:var(--bg-input);border-radius:6px;font-size:14px;color:var(--text);outline:none;font-family:inherit;margin-bottom:10px;">
+      <label style="font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px;">Date</label>
+      <input id="new-entry-date" type="date" value="${defaultDate}"
+        style="width:100%;padding:8px 12px;border:1px solid var(--border);background:var(--bg-input);border-radius:6px;font-size:14px;color:var(--text);outline:none;font-family:inherit;">
+      <div id="create-entry-error" style="display:none;font-size:12px;color:var(--red);margin-top:6px;"></div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="this.closest('#create-entry-overlay').remove()"
+          style="flex:1;padding:8px;border:1px solid var(--border);background:transparent;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text-secondary);font-family:inherit;">Cancel</button>
+        <button onclick="submitCreateEntry('${notebookId}')"
+          style="flex:1;padding:8px;border:none;background:var(--accent);color:white;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;">Create</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  const titleInput = document.getElementById('new-entry-title');
+  titleInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitCreateEntry(notebookId);
+    if (e.key === 'Escape') overlay.remove();
+  });
+  setTimeout(() => titleInput.focus(), 50);
+}
+
+async function submitCreateEntry(notebookId) {
+  const nb = NOTEBOOKS.find(n => n.id === notebookId);
+  if (!nb) return;
+
+  const titleInput = document.getElementById('new-entry-title');
+  const dateInput = document.getElementById('new-entry-date');
+  const errorEl = document.getElementById('create-entry-error');
+  const overlay = document.getElementById('create-entry-overlay');
+
+  const title = (titleInput.value || '').trim() || 'New Entry';
+  const dateVal = dateInput.value; // YYYY-MM-DD
+
+  if (!dateVal) {
+    errorEl.textContent = 'Please select a date';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  // Parse date for the heading (MM-DD-YYYY)
+  const [y, m, d] = dateVal.split('-');
+  const dateHeading = `${m}-${d}-${y}`;
+
+  try {
+    if (nb.type === 'directory') {
+      // Directory notebook: create a new .md file
+      const fileName = `${dateVal} ${title}.md`;
+      const content = `# ${dateHeading}\n\n## ${title}\n\n`;
+
+      if (IS_TAURI && nb.absDir) {
+        const filePath = nb.absDir + '/' + fileName;
+        await tauriInvoke('write_file', { path: filePath, content });
+      } else if (dirHandle) {
+        const entriesDir = await dirHandle.getDirectoryHandle('entries');
+        const subDir = await entriesDir.getDirectoryHandle(nb.dirName);
+        const fileHandle = await subDir.getFileHandle(fileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+      } else {
+        showToast('Cannot write files in this mode');
+        return;
+      }
+    } else {
+      // Single-file notebook: prepend a new date heading + content to the file
+      const newSection = `# ${dateHeading}\n\n## ${title}\n\n`;
+
+      // Read existing content
+      let existing = '';
+      if (IS_TAURI && nb.absPath) {
+        try { existing = await tauriReadTextFile(nb.absPath); } catch (e) {}
+        const newContent = newSection + '\n' + existing;
+        await tauriInvoke('write_file', { path: nb.absPath, content: newContent });
+      } else if (dirHandle) {
+        const pathParts = nb.file.split('/');
+        let current = dirHandle;
+        for (let i = 0; i < pathParts.length - 1; i++) {
+          current = await current.getDirectoryHandle(pathParts[i]);
+        }
+        const fileHandle = await current.getFileHandle(pathParts[pathParts.length - 1]);
+        const file = await fileHandle.getFile();
+        existing = await file.text();
+        const newContent = newSection + '\n' + existing;
+        const writable = await fileHandle.createWritable();
+        await writable.write(newContent);
+        await writable.close();
+      } else {
+        showToast('Cannot write files in this mode');
+        return;
+      }
+    }
+
+    if (overlay) overlay.remove();
+    showToast('Entry created');
+    try {
+      await reload();
+    } catch (reloadErr) {
+      console.error('Reload after entry creation failed:', reloadErr);
+      showToast('Entry created but failed to refresh — try the refresh button');
+    }
+    // Select the new entry (it should be first since it's the newest)
+    const entries = notebookEntries[notebookId] || [];
+    if (entries.length > 0) {
+      selectEntry(notebookId, 0);
+    }
+  } catch (e) {
+    if (errorEl && document.body.contains(errorEl)) {
+      errorEl.textContent = String(e);
+      errorEl.style.display = 'block';
+    } else {
+      console.error('Create entry failed:', e);
+      showToast('Failed to create entry: ' + String(e));
+    }
+  }
+}
+
+// ============================================================
 // COPY TO NOTEBOOK (for read-only imported entries)
 // ============================================================
 
@@ -6309,8 +6908,8 @@ function showCopyToNotebookDialog(sourceNotebookId, entryIndex) {
   const entry = (notebookEntries[sourceNotebookId] || [])[entryIndex];
   if (!entry) return;
 
-  // Get writable file-based notebooks as targets
-  const targets = NOTEBOOKS.filter(nb => nb.type === 'file' && !nb.readonly);
+  // Get all writable notebooks as targets
+  const targets = NOTEBOOKS.filter(nb => !nb.readonly);
 
   if (targets.length === 0) {
     showToast('No writable notebooks found. Create a notebook first.');
@@ -6364,40 +6963,55 @@ async function copyEntryToNotebook(entry, targetNotebookId) {
   const targetNb = NOTEBOOKS.find(n => n.id === targetNotebookId);
   if (!targetNb) return;
 
-  // Build the entry text with date heading and body
-  const entryText = `\n---\n\n## ${entry.date}\n\n${entry.body}\n`;
+  try {
+    if (targetNb.type === 'directory') {
+      // Directory notebook: create a new file for the copied entry
+      const dateForFile = entry.date.replace(/(\d{2})-(\d{2})-(\d{4})/, '$3-$1-$2'); // MM-DD-YYYY → YYYY-MM-DD
+      const firstLine = entry.body.split('\n').find(l => l.trim()) || 'Copied Entry';
+      const title = firstLine.replace(/^#+\s*/, '').replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '').substring(0, 60).trim() || 'Copied Entry';
+      const safeTitle = title.replace(/[\/\\:*?"<>|]/g, '-');
+      const fileName = `${dateForFile} ${safeTitle}.md`;
+      const content = `# ${entry.date}\n\n${entry.body}\n`;
 
-  if (IS_TAURI && targetNb.absPath) {
-    try {
-      // Read existing content, append the new entry
-      let existing = '';
-      try { existing = await tauriReadTextFile(targetNb.absPath); } catch (e) {}
-      const newContent = existing.trimEnd() + '\n' + entryText;
-      await tauriInvoke('write_file', { path: targetNb.absPath, content: newContent });
-      showToast(`Copied to "${targetNb.name}"!`);
-      await reload();
-    } catch (e) {
-      showToast('Copy failed: ' + e);
-    }
-  } else if (dirHandle) {
-    try {
-      const pathParts = targetNb.file.split('/');
-      let current = dirHandle;
-      for (let i = 0; i < pathParts.length - 1; i++) {
-        current = await current.getDirectoryHandle(pathParts[i]);
+      if (IS_TAURI && targetNb.absDir) {
+        await tauriInvoke('write_file', { path: targetNb.absDir + '/' + fileName, content });
+      } else if (dirHandle) {
+        const entriesDir = await dirHandle.getDirectoryHandle('entries');
+        const subDir = await entriesDir.getDirectoryHandle(targetNb.dirName);
+        const fileHandle = await subDir.getFileHandle(fileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
       }
-      const fileHandle = await current.getFileHandle(pathParts[pathParts.length - 1], { create: false });
-      const file = await fileHandle.getFile();
-      const existing = await file.text();
-      const newContent = existing.trimEnd() + '\n' + entryText;
-      const writable = await fileHandle.createWritable();
-      await writable.write(newContent);
-      await writable.close();
-      showToast(`Copied to "${targetNb.name}"!`);
-      await reload();
-    } catch (e) {
-      showToast('Copy failed: ' + e);
+    } else {
+      // Single-file notebook: append entry text
+      const entryText = `\n---\n\n## ${entry.date}\n\n${entry.body}\n`;
+
+      if (IS_TAURI && targetNb.absPath) {
+        let existing = '';
+        try { existing = await tauriReadTextFile(targetNb.absPath); } catch (e) {}
+        const newContent = existing.trimEnd() + '\n' + entryText;
+        await tauriInvoke('write_file', { path: targetNb.absPath, content: newContent });
+      } else if (dirHandle) {
+        const pathParts = targetNb.file.split('/');
+        let current = dirHandle;
+        for (let i = 0; i < pathParts.length - 1; i++) {
+          current = await current.getDirectoryHandle(pathParts[i]);
+        }
+        const fileHandle = await current.getFileHandle(pathParts[pathParts.length - 1], { create: false });
+        const file = await fileHandle.getFile();
+        const existing = await file.text();
+        const newContent = existing.trimEnd() + '\n' + entryText;
+        const writable = await fileHandle.createWritable();
+        await writable.write(newContent);
+        await writable.close();
+      }
     }
+
+    showToast(`Copied to "${targetNb.name}"!`);
+    await reload();
+  } catch (e) {
+    showToast('Copy failed: ' + e);
   }
 }
 

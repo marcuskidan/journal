@@ -182,6 +182,48 @@ fn write_file(path: String, content: String) -> Result<(), String> {
     fs::write(&path, content).map_err(|e| format!("Failed to write {}: {}", path, e))
 }
 
+/// Creates a new directory-based notebook by creating a subdirectory inside entries/
+/// with an initial empty entry file dated today.
+#[tauri::command]
+fn create_notebook(root: String, name: String) -> Result<String, String> {
+    // Sanitize: keep alphanumerics, spaces, hyphens, underscores
+    let safe_name: String = name
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == ' ' || *c == '-' || *c == '_')
+        .collect::<String>()
+        .trim()
+        .to_string();
+
+    if safe_name.is_empty() {
+        return Err("Notebook name cannot be empty".to_string());
+    }
+
+    // Convert display name to a slug for the directory name
+    let dir_name = safe_name
+        .to_lowercase()
+        .replace(' ', "-");
+
+    let dir_path = Path::new(&root).join("entries").join(&dir_name);
+
+    if dir_path.exists() {
+        return Err(format!("A notebook named \"{}\" already exists", safe_name));
+    }
+
+    fs::create_dir_all(&dir_path).map_err(|e| format!("Failed to create directory: {}", e))?;
+
+    // Create an initial entry file dated today
+    let today = chrono::Local::now();
+    let date_prefix = today.format("%Y-%m-%d").to_string();
+    let date_heading = today.format("%m-%d-%Y").to_string();
+    let file_name = format!("{} New Entry.md", date_prefix);
+    let file_path = dir_path.join(&file_name);
+    let content = format!("# {}\n\n", date_heading);
+    fs::write(&file_path, content)
+        .map_err(|e| format!("Failed to create initial entry: {}", e))?;
+
+    Ok(dir_name)
+}
+
 /// Checks whether a given path contains an entries/ subdirectory.
 #[tauri::command]
 fn validate_folder(path: String) -> bool {
@@ -326,6 +368,7 @@ pub fn run() {
             read_file,
             write_file,
             validate_folder,
+            create_notebook,
             check_for_updates,
             set_github_repo,
             get_github_repo,
